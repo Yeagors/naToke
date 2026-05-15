@@ -60,8 +60,15 @@ class RentalController extends Controller
         return view('rentals.index', compact('rentals', 'status', 'counts', 'q'));
     }
 
-    public function show(Rental $rental): View
+    public function show(Request $request, Rental $rental): View
     {
+        $user = $request->user();
+
+        // Drivers can only see their own rental; admins see everything.
+        if (! $user->isAdmin() && $rental->user_id !== $user->id) {
+            abort(403, 'Эта аренда оформлена не на вас.');
+        }
+
         $rental->load([
             'car',
             'user',

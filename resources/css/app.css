@@ -51,6 +51,7 @@
     input[type='email'],
     input[type='number'],
     input[type='date'],
+    input[type='datetime-local'],
     input[type='url'],
     input[type='search'],
     input[type='tel'],
@@ -68,6 +69,44 @@
         border-color: theme('colors.neon.cyan') !important;
         background-color: rgba(16, 18, 31, 0.9);
         box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.18);
+    }
+
+    /* Selects: custom neon chevron, dark dropdown */
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300e5ff' stroke-width='2.2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.85rem center;
+        background-size: 1.1rem;
+        padding-right: 2.75rem !important;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    select:hover {
+        border-color: rgba(0, 229, 255, 0.30) !important;
+    }
+    select:focus {
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23c2ff45' stroke-width='2.2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 15l6-6 6 6'/%3E%3C/svg%3E");
+    }
+    /* Native option styling — Chromium / Firefox respect bg/color. Safari ignores. */
+    select option {
+        background-color: #10121f;
+        color: theme('colors.ink.100');
+        padding: 8px 12px;
+    }
+    select option:checked,
+    select option:hover {
+        background: linear-gradient(0deg, rgba(0, 229, 255, 0.18), rgba(0, 229, 255, 0.18)), #10121f;
+        color: theme('colors.neon.cyan');
+    }
+    select:disabled,
+    input:disabled,
+    textarea:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        background-color: rgba(16, 18, 31, 0.4) !important;
     }
     input::placeholder,
     textarea::placeholder {

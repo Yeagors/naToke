@@ -116,7 +116,11 @@
                         <h2 class="text-lg font-display font-semibold">Мои недавние транзакции</h2>
                     </div>
                     @forelse($stats['recent_transactions'] as $t)
-                        <div class="flex items-center gap-3 py-2 border-b border-white/5 last:border-b-0">
+                        @if($t->rental_id)
+                            <a href="{{ route('rentals.show', $t->rental_id) }}" class="flex items-center gap-3 py-2 border-b border-white/5 last:border-b-0 -mx-1 px-1 rounded hover:bg-white/5 transition">
+                        @else
+                            <div class="flex items-center gap-3 py-2 border-b border-white/5 last:border-b-0">
+                        @endif
                             @if($t->type->value === 'deposit')
                                 <span class="badge badge-deposit">+</span>
                             @else
@@ -124,12 +128,21 @@
                             @endif
                             <div class="flex-1 min-w-0">
                                 <div class="text-sm">{{ $t->comment ?: $t->type->label() }}</div>
-                                <div class="text-xs text-ink-300">{{ $t->created_at->format('d.m.Y H:i') }}</div>
+                                <div class="text-xs text-ink-300">
+                                    {{ $t->created_at->format('d.m.Y H:i') }}
+                                    @if($t->rental_id)
+                                        · <span class="text-neon-cyan">аренда #{{ $t->rental_id }} →</span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="text-sm font-mono font-semibold {{ $t->type->value === 'deposit' ? 'text-neon-lime' : 'text-neon-red' }}">
                                 {{ $t->signed_amount }} ₽
                             </div>
-                        </div>
+                        @if($t->rental_id)
+                            </a>
+                        @else
+                            </div>
+                        @endif
                     @empty
                         <div class="text-sm text-ink-300 py-4">Транзакций ещё нет.</div>
                     @endforelse
@@ -141,7 +154,11 @@
                 <div class="glass rounded-2xl p-6 lg:col-span-2">
                     <h2 class="text-lg font-display font-semibold mb-4">Мои транзакции</h2>
                     @forelse($stats['recent_transactions'] as $t)
-                        <div class="flex items-center gap-3 py-2 border-b border-white/5 last:border-b-0">
+                        @if($t->rental_id)
+                            <a href="{{ route('rentals.show', $t->rental_id) }}" class="flex items-center gap-3 py-2 border-b border-white/5 last:border-b-0 -mx-1 px-1 rounded hover:bg-white/5 transition">
+                        @else
+                            <div class="flex items-center gap-3 py-2 border-b border-white/5 last:border-b-0">
+                        @endif
                             @if($t->type->value === 'deposit')
                                 <span class="badge badge-deposit">+</span>
                             @else
@@ -149,12 +166,21 @@
                             @endif
                             <div class="flex-1 min-w-0">
                                 <div class="text-sm">{{ $t->comment ?: $t->type->label() }}</div>
-                                <div class="text-xs text-ink-300">{{ $t->created_at->format('d.m.Y H:i') }}</div>
+                                <div class="text-xs text-ink-300">
+                                    {{ $t->created_at->format('d.m.Y H:i') }}
+                                    @if($t->rental_id)
+                                        · <span class="text-neon-cyan">аренда #{{ $t->rental_id }} →</span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="text-sm font-mono font-semibold {{ $t->type->value === 'deposit' ? 'text-neon-lime' : 'text-neon-red' }}">
                                 {{ $t->signed_amount }} ₽
                             </div>
-                        </div>
+                        @if($t->rental_id)
+                            </a>
+                        @else
+                            </div>
+                        @endif
                     @empty
                         <div class="text-sm text-ink-300 py-4">Транзакций ещё нет.</div>
                     @endforelse

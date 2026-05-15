@@ -1,15 +1,23 @@
+@php $isAdmin = auth()->user()->isAdmin(); @endphp
 <x-app-layout>
     @section('title', 'Аренда #'.$rental->id)
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
-                <a href="{{ route('cars.show', $rental->car) }}" class="text-xs text-ink-300 hover:text-neon-cyan inline-flex items-center gap-1 mb-1">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                    к авто {{ $rental->car->display_name }}
-                </a>
+                @if($isAdmin)
+                    <a href="{{ route('cars.show', $rental->car) }}" class="text-xs text-ink-300 hover:text-neon-cyan inline-flex items-center gap-1 mb-1">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        к авто {{ $rental->car->display_name }}
+                    </a>
+                @else
+                    <a href="{{ route('dashboard') }}" class="text-xs text-ink-300 hover:text-neon-cyan inline-flex items-center gap-1 mb-1">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        к дашборду
+                    </a>
+                @endif
                 <h1 class="text-3xl font-display font-bold tracking-tight">Аренда #{{ $rental->id }}</h1>
-                <p class="text-ink-300 text-sm">создана {{ $rental->created_at->format('d.m.Y H:i') }}@if($rental->creator) · оформил {{ $rental->creator->short_name }}@endif</p>
+                <p class="text-ink-300 text-sm">создана {{ $rental->created_at->format('d.m.Y H:i') }}@if($rental->creator && $isAdmin) · оформил {{ $rental->creator->short_name }}@endif</p>
             </div>
             <span class="badge {{ $rental->status->badgeClass() }} self-start sm:self-auto">{{ $rental->status->label() }}</span>
         </div>
@@ -25,41 +33,43 @@
             </div>
         @endif
 
-        {{-- Action bar --}}
-        <div class="glass rounded-2xl p-4 mb-6 flex flex-wrap items-center gap-2">
-            @if($rental->isOpen())
-                <form method="POST" action="{{ route('rentals.pause', $rental) }}">
-                    @csrf
-                    <button type="submit" class="btn btn-ghost">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Приостановить
-                    </button>
-                </form>
-            @elseif($rental->isPaused())
-                <form method="POST" action="{{ route('rentals.resume', $rental) }}">
-                    @csrf
-                    <button type="submit" class="btn btn-primary">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-                        Возобновить
-                    </button>
-                </form>
-            @endif
-            @if(! $rental->isClosed())
-                <form method="POST" action="{{ route('rentals.close', $rental) }}" onsubmit="return confirm('Закрыть аренду навсегда?')" class="ml-auto">
-                    @csrf
-                    <button type="submit" class="btn btn-danger">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                        Закрыть аренду
-                    </button>
-                </form>
-            @endif
-        </div>
+        {{-- Action bar (admin only) --}}
+        @if($isAdmin)
+            <div class="glass rounded-2xl p-4 mb-6 flex flex-wrap items-center gap-2">
+                @if($rental->isOpen())
+                    <form method="POST" action="{{ route('rentals.pause', $rental) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-ghost">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Приостановить
+                        </button>
+                    </form>
+                @elseif($rental->isPaused())
+                    <form method="POST" action="{{ route('rentals.resume', $rental) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-primary">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            Возобновить
+                        </button>
+                    </form>
+                @endif
+                @if(! $rental->isClosed())
+                    <form method="POST" action="{{ route('rentals.close', $rental) }}" onsubmit="return confirm('Закрыть аренду навсегда?')" class="ml-auto">
+                        @csrf
+                        <button type="submit" class="btn btn-danger">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            Закрыть аренду
+                        </button>
+                    </form>
+                @endif
+            </div>
+        @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {{-- Left: info --}}
             <div class="lg:col-span-1 flex flex-col gap-6">
                 {{-- Car --}}
-                <a href="{{ route('cars.show', $rental->car) }}" class="glass card-lift rounded-2xl p-5 block">
+                <{{ $isAdmin ? 'a' : 'div' }} @if($isAdmin) href="{{ route('cars.show', $rental->car) }}" @endif class="glass {{ $isAdmin ? 'card-lift' : '' }} rounded-2xl p-5 block">
                     <div class="stat-label mb-2">Авто</div>
                     <div class="flex items-center gap-3">
                         @if($rental->car->photo)
@@ -74,10 +84,10 @@
                             <div class="text-xs text-ink-300 font-mono">{{ $rental->car->license_plate }}</div>
                         </div>
                     </div>
-                </a>
+                </{{ $isAdmin ? 'a' : 'div' }}>
 
                 {{-- Renter --}}
-                <a href="{{ route('users.show', $rental->user) }}" class="glass card-lift rounded-2xl p-5 block">
+                <{{ $isAdmin ? 'a' : 'div' }} @if($isAdmin) href="{{ route('users.show', $rental->user) }}" @endif class="glass {{ $isAdmin ? 'card-lift' : '' }} rounded-2xl p-5 block">
                     <div class="stat-label mb-2">Арендатор</div>
                     <div class="flex items-center gap-3">
                         @if($rental->user->photo)
@@ -93,7 +103,7 @@
                             <div class="text-xs mt-0.5">Баланс: <span class="font-mono {{ (float) $rental->user->balance >= 0 ? 'text-neon-lime' : 'text-neon-red' }}">{{ number_format((float) $rental->user->balance, 2, '.', ' ') }} ₽</span></div>
                         </div>
                     </div>
-                </a>
+                </{{ $isAdmin ? 'a' : 'div' }}>
 
                 {{-- Tariff snapshot --}}
                 <div class="glass rounded-2xl p-5">

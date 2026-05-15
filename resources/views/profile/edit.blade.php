@@ -31,16 +31,34 @@
             <div class="lg:col-span-1 flex flex-col gap-6">
                 {{-- Avatar card --}}
                 <div class="glass rounded-2xl p-6 text-center">
-                    <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" id="photo-form">
-                        @csrf
-                        @method('PATCH')
-                        {{-- Hidden current fields to preserve them when only updating photo --}}
-                        @foreach(['login','last_name','first_name','middle_name','birth_date','passport_series','passport_number','passport_issued_by','passport_issued_at','passport_department_code'] as $f)
-                            @php $v = old($f, optional($user->{$f})->format ? $user->{$f}->format('Y-m-d') : $user->{$f}); @endphp
-                            <input type="hidden" name="{{ $f }}" value="{{ $v }}">
-                        @endforeach
+                    @if($user->isAdmin())
+                        <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" id="photo-form">
+                            @csrf
+                            @method('PATCH')
+                            {{-- Hidden current fields to preserve them when only updating photo --}}
+                            @foreach(['login','last_name','first_name','middle_name','birth_date','passport_series','passport_number','passport_issued_by','passport_issued_at','passport_department_code'] as $f)
+                                @php $v = old($f, optional($user->{$f})->format ? $user->{$f}->format('Y-m-d') : $user->{$f}); @endphp
+                                <input type="hidden" name="{{ $f }}" value="{{ $v }}">
+                            @endforeach
 
-                        <div class="relative inline-block group">
+                            <div class="relative inline-block group">
+                                @if($user->photo)
+                                    <img src="{{ $user->photo_url }}" class="w-32 h-32 rounded-full object-cover ring-2 ring-white/10 shadow-glow-cyan" alt="">
+                                @else
+                                    <div class="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-display font-bold text-white shadow-glow-violet"
+                                         style="background-image: linear-gradient(135deg, #00d4ff, #a855f7, #ec4899);">
+                                        {{ mb_substr($user->first_name, 0, 1) }}{{ mb_substr($user->last_name, 0, 1) }}
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="mt-4">
+                                <input type="file" name="photo" id="photo" accept="image/*" class="text-sm text-ink-200 w-full" onchange="document.getElementById('photo-form').submit()">
+                                <x-input-error :messages="$errors->get('photo')" />
+                            </div>
+                        </form>
+                    @else
+                        {{-- Driver: avatar only, no upload --}}
+                        <div class="relative inline-block">
                             @if($user->photo)
                                 <img src="{{ $user->photo_url }}" class="w-32 h-32 rounded-full object-cover ring-2 ring-white/10 shadow-glow-cyan" alt="">
                             @else
@@ -50,11 +68,8 @@
                                 </div>
                             @endif
                         </div>
-                        <div class="mt-4">
-                            <input type="file" name="photo" id="photo" accept="image/*" class="text-sm text-ink-200 w-full" onchange="document.getElementById('photo-form').submit()">
-                            <x-input-error :messages="$errors->get('photo')" />
-                        </div>
-                    </form>
+                        <p class="text-xs text-ink-300 mt-3">Сменить фото может администратор.</p>
+                    @endif
                 </div>
 
                 {{-- Balance card --}}
@@ -77,7 +92,11 @@
                 <div class="glass rounded-2xl p-6">
                     <h3 class="text-sm font-display font-semibold mb-3 uppercase tracking-wider text-ink-200">Последние транзакции</h3>
                     @forelse($user->transactions as $t)
-                        <div class="flex items-center gap-3 py-2 border-b border-white/5 last:border-b-0">
+                        @if($t->rental_id)
+                            <a href="{{ route('rentals.show', $t->rental_id) }}" class="flex items-center gap-3 py-2 border-b border-white/5 last:border-b-0 -mx-1 px-1 rounded hover:bg-white/5 transition">
+                        @else
+                            <div class="flex items-center gap-3 py-2 border-b border-white/5 last:border-b-0">
+                        @endif
                             @if($t->type->value === 'deposit')
                                 <span class="badge badge-deposit">+</span>
                             @else
@@ -85,12 +104,21 @@
                             @endif
                             <div class="flex-1 min-w-0">
                                 <div class="text-sm truncate">{{ $t->comment ?: $t->type->label() }}</div>
-                                <div class="text-xs text-ink-300">{{ $t->created_at->format('d.m.Y H:i') }}</div>
+                                <div class="text-xs text-ink-300">
+                                    {{ $t->created_at->format('d.m.Y H:i') }}
+                                    @if($t->rental_id)
+                                        · <span class="text-neon-cyan">аренда #{{ $t->rental_id }} →</span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="text-sm font-mono font-semibold {{ $t->type->value === 'deposit' ? 'text-neon-lime' : 'text-neon-red' }}">
                                 {{ $t->signed_amount }} ₽
                             </div>
-                        </div>
+                        @if($t->rental_id)
+                            </a>
+                        @else
+                            </div>
+                        @endif
                     @empty
                         <div class="text-sm text-ink-300 py-2">Пока пусто.</div>
                     @endforelse

@@ -50,9 +50,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/tariffs/{tariff}', [TariffController::class, 'show'])->name('tariffs.show');
         Route::patch('/tariffs/{tariff}', [TariffController::class, 'update'])->name('tariffs.update');
 
-        // Rentals
+        // Rentals — admin only
         Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
-        Route::get('/rentals/{rental}', [RentalController::class, 'show'])->name('rentals.show');
         Route::post('/rentals/{rental}/pause', [RentalController::class, 'pause'])->name('rentals.pause');
         Route::post('/rentals/{rental}/resume', [RentalController::class, 'resume'])->name('rentals.resume');
         Route::post('/rentals/{rental}/close', [RentalController::class, 'close'])->name('rentals.close');
@@ -60,6 +59,9 @@ Route::middleware('auth')->group(function () {
         // Activity logs (audit)
         Route::get('/logs', [ActivityLogController::class, 'index'])->name('logs.index');
     });
+
+    // Rental show — accessible by admin OR the renter (ownership check inside controller)
+    Route::get('/rentals/{rental}', [RentalController::class, 'show'])->name('rentals.show');
 });
 
 require __DIR__.'/auth.php';

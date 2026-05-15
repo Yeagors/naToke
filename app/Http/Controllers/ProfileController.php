@@ -26,6 +26,12 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
+
+        // Drivers cannot self-edit (data is managed by an admin)
+        if (! $user->isAdmin()) {
+            abort(403, 'Редактирование профиля доступно только администратору.');
+        }
+
         $data = $request->validated();
 
         if ($request->hasFile('photo')) {
@@ -49,12 +55,18 @@ class ProfileController extends Controller
 
     public function updatePassword(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
+        // Drivers cannot self-change password — admin resets via users.update
+        if (! $user->isAdmin()) {
+            abort(403, 'Смена пароля доступна только администратору.');
+        }
+
         $validated = $request->validateWithBag('updatePassword', [
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', Password::min(6)],
         ]);
 
-        $user = $request->user();
         $user->update([
             'password' => Hash::make($validated['password']),
         ]);

@@ -1,3 +1,4 @@
+@if($user->isAdmin())
 <section class="glass rounded-2xl p-6">
     <header class="mb-4">
         <h2 class="text-lg font-display font-bold">Смена пароля</h2>
@@ -37,3 +38,11 @@
         </div>
     </form>
 </section>
+@else
+<section class="glass rounded-2xl p-6">
+    <header class="mb-2">
+        <h2 class="text-lg font-display font-bold">Смена пароля</h2>
+    </header>
+    <p class="text-sm text-ink-300">Сменить пароль может администратор. Обратитесь к нему, если нужно обновить учётные данные.</p>
+</section>
+@endif
