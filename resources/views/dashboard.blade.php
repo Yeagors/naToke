@@ -98,7 +98,7 @@
                             @endif
                             <div class="flex-1 min-w-0">
                                 <div class="text-sm font-medium truncate">{{ $u->full_name }}</div>
-                                <div class="text-xs text-ink-300 truncate">@{{ $u->login }} · {{ $u->created_at?->format('d.m.Y') }}</div>
+                                <div class="text-xs text-ink-300 truncate">{{ '@'.$u->login }} · {{ $u->created_at?->format('d.m.Y') }}</div>
                             </div>
                             @if($u->isAdmin())
                                 <span class="badge badge-admin">admin</span>

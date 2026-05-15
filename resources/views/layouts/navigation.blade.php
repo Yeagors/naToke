@@ -68,7 +68,7 @@
                     <div x-show="menu" x-transition x-cloak class="absolute right-0 mt-2 w-56 rounded-xl glass-strong overflow-hidden">
                         <div class="px-4 py-3 border-b border-white/5">
                             <div class="text-sm font-semibold text-ink-100">{{ $user->full_name }}</div>
-                            <div class="text-xs text-ink-300">@{{ $user->login }}</div>
+                            <div class="text-xs text-ink-300">{{ '@'.$user->login }}</div>
                             <div class="mt-1">
                                 @if($isAdmin)
                                     <span class="badge badge-admin">admin</span>

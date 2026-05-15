@@ -40,11 +40,12 @@
                             <th>Роль</th>
                             <th class="text-right">Баланс</th>
                             <th>Создан</th>
+                            <th class="w-8"></th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($users as $u)
-                            <tr>
+                            <tr onclick="location.href='{{ route('users.show', $u) }}'" class="cursor-pointer group">
                                 <td class="text-ink-300 font-mono text-xs">{{ $u->id }}</td>
                                 <td>
                                     <div class="flex items-center gap-3">
@@ -56,14 +57,14 @@
                                             </div>
                                         @endif
                                         <div>
-                                            <div class="font-medium">{{ $u->full_name }}</div>
+                                            <div class="font-medium group-hover:text-neon-cyan transition">{{ $u->full_name }}</div>
                                             @if($u->passport_department_code)
                                                 <div class="text-xs text-ink-300">подразд. {{ $u->passport_department_code }}</div>
                                             @endif
                                         </div>
                                     </div>
                                 </td>
-                                <td class="font-mono text-sm">@{{ $u->login }}</td>
+                                <td class="font-mono text-sm">{{ '@'.$u->login }}</td>
                                 <td class="font-mono text-xs text-ink-200">
                                     @if($u->passport_series || $u->passport_number)
                                         {{ $u->passport_series }} {{ $u->passport_number }}
@@ -85,9 +86,12 @@
                                     {{ number_format((float) $u->balance, 2, '.', ' ') }} ₽
                                 </td>
                                 <td class="text-sm text-ink-300">{{ $u->created_at?->format('d.m.Y') }}</td>
+                                <td class="text-right pr-4">
+                                    <svg class="w-4 h-4 inline text-ink-400 group-hover:text-neon-cyan transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </td>
                             </tr>
                         @empty
-                            <tr><td colspan="8" class="text-center py-10 text-ink-300">Никого не нашлось</td></tr>
+                            <tr><td colspan="9" class="text-center py-10 text-ink-300">Никого не нашлось</td></tr>
                         @endforelse
                     </tbody>
                 </table>

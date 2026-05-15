@@ -24,6 +24,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        // Order matters: /users/create must come before /users/{user}
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
 
         Route::get('/cars', [CarController::class, 'index'])->name('cars.index');
         Route::get('/cars/create', [CarController::class, 'create'])->name('cars.create');

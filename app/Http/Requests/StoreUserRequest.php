@@ -31,6 +31,7 @@ class StoreUserRequest extends FormRequest
             'passport_issued_by' => ['nullable', 'string', 'max:255'],
             'passport_issued_at' => ['nullable', 'date', 'before_or_equal:today'],
             'passport_department_code' => ['nullable', 'string', 'max:10'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
 
         if ($this->isMethod('post')) {
