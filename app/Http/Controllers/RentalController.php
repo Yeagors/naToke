@@ -10,6 +10,7 @@ use App\Models\Rental;
 use App\Models\Tariff;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -123,6 +124,12 @@ class RentalController extends Controller
             return $rental;
         });
 
+        ActivityLogger::log(
+            'rentals.created',
+            $rental,
+            "Оформлена аренда #{$rental->id}: {$rental->user->full_name} → {$rental->car->display_name} · тариф {$tariff->name}"
+        );
+
         return redirect()->route('rentals.show', $rental)->with('status', 'Аренда оформлена.');
     }
 
@@ -135,6 +142,8 @@ class RentalController extends Controller
         $rental->status = RentalStatus::Paused;
         $rental->paused_at = now();
         $rental->save();
+
+        ActivityLogger::log('rentals.paused', $rental, "Приостановлена аренда #{$rental->id} ({$rental->car->display_name})");
 
         return back()->with('status', 'Аренда приостановлена.');
     }
@@ -149,6 +158,8 @@ class RentalController extends Controller
         $rental->paused_at = null;
         $rental->save();
 
+        ActivityLogger::log('rentals.resumed', $rental, "Возобновлена аренда #{$rental->id} ({$rental->car->display_name})");
+
         return back()->with('status', 'Аренда возобновлена.');
     }
 
@@ -162,6 +173,8 @@ class RentalController extends Controller
         $rental->closed_at = now();
         $rental->next_charge_at = null;
         $rental->save();
+
+        ActivityLogger::log('rentals.closed', $rental, "Закрыта аренда #{$rental->id} ({$rental->car->display_name})");
 
         return back()->with('status', 'Аренда закрыта.');
     }

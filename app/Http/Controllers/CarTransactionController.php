@@ -6,6 +6,7 @@ use App\Enums\CarTransactionType;
 use App\Http\Requests\StoreCarTransactionRequest;
 use App\Models\Car;
 use App\Models\CarTransaction;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -34,7 +35,15 @@ class CarTransactionController extends Controller
         });
 
         $label = $type === CarTransactionType::Income ? 'Приход' : 'Расход';
+        $action = $type === CarTransactionType::Income ? 'car_transactions.income' : 'car_transactions.expense';
+        $formatted = number_format($amount, 2, '.', ' ');
+        $commentSuffix = ! empty($data['comment']) ? " · {$data['comment']}" : '';
+        ActivityLogger::log(
+            $action,
+            $car,
+            "{$label} {$formatted} ₽ по авто {$car->display_name}{$commentSuffix}",
+        );
 
-        return back()->with('status', "{$label} на сумму ".number_format($amount, 2, '.', ' ').' ₽ зафиксирован.');
+        return back()->with('status', "{$label} на сумму ".$formatted.' ₽ зафиксирован.');
     }
 }

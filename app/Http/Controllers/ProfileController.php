@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -38,6 +39,11 @@ class ProfileController extends Controller
 
         $user->fill($data)->save();
 
+        $diff = ActivityLogger::diff($user);
+        if (! empty($diff)) {
+            ActivityLogger::log('profile.updated', $user, 'Профиль обновлён владельцем', $diff);
+        }
+
         return redirect()->route('profile.edit')->with('status', 'profile-updated');
     }
 
@@ -48,9 +54,12 @@ class ProfileController extends Controller
             'password' => ['required', 'confirmed', Password::min(6)],
         ]);
 
-        $request->user()->update([
+        $user = $request->user();
+        $user->update([
             'password' => Hash::make($validated['password']),
         ]);
+
+        ActivityLogger::log('profile.password_changed', $user, 'Пользователь сменил себе пароль');
 
         return back()->with('status', 'password-updated');
     }

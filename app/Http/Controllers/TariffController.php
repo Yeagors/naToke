@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\TariffPeriod;
 use App\Http\Requests\StoreTariffRequest;
 use App\Models\Tariff;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -32,7 +33,9 @@ class TariffController extends Controller
 
     public function store(StoreTariffRequest $request): RedirectResponse
     {
-        Tariff::create($request->validated());
+        $tariff = Tariff::create($request->validated());
+
+        ActivityLogger::log('tariffs.created', $tariff, "Создан тариф «{$tariff->name}» — {$tariff->amount} ₽ / {$tariff->period_count} {$tariff->period->label()}");
 
         return redirect()->route('tariffs.index')->with('status', 'Тариф создан.');
     }
@@ -48,6 +51,11 @@ class TariffController extends Controller
     public function update(StoreTariffRequest $request, Tariff $tariff): RedirectResponse
     {
         $tariff->fill($request->validated())->save();
+
+        $diff = ActivityLogger::diff($tariff);
+        if (! empty($diff)) {
+            ActivityLogger::log('tariffs.updated', $tariff, "Изменён тариф «{$tariff->name}»", $diff);
+        }
 
         return redirect()->route('tariffs.show', $tariff)->with('status', 'Тариф обновлён.');
     }

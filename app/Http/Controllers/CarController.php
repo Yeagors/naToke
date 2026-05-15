@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCarRequest;
 use App\Models\Car;
 use App\Models\Tariff;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -48,7 +49,9 @@ class CarController extends Controller
             $data['photo'] = $request->file('photo')->store('cars', 'public');
         }
 
-        Car::create($data);
+        $car = Car::create($data);
+
+        ActivityLogger::log('cars.created', $car, "Добавлено авто {$car->display_name} ({$car->license_plate})");
 
         return redirect()
             ->route('cars.index')
@@ -84,6 +87,11 @@ class CarController extends Controller
         }
 
         $car->fill($data)->save();
+
+        $diff = ActivityLogger::diff($car);
+        if (! empty($diff)) {
+            ActivityLogger::log('cars.updated', $car, "Изменено авто {$car->display_name}", $diff);
+        }
 
         return redirect()->route('cars.show', $car)->with('status', 'Данные авто обновлены.');
     }

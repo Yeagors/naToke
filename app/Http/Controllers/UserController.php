@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -55,7 +56,13 @@ class UserController extends Controller
             unset($data['photo']);
         }
 
-        User::create($data);
+        $user = User::create($data);
+
+        ActivityLogger::log(
+            'users.created',
+            $user,
+            "Создан пользователь {$user->full_name} ({$user->role->value})"
+        );
 
         return redirect()
             ->route('users.index')
@@ -104,9 +111,11 @@ class UserController extends Controller
     public function update(StoreUserRequest $request, User $user): RedirectResponse
     {
         $data = $request->validated();
+        $passwordChanged = false;
 
         if (! empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
+            $passwordChanged = true;
         } else {
             unset($data['password']);
         }
@@ -121,6 +130,24 @@ class UserController extends Controller
         }
 
         $user->fill($data)->save();
+
+        $diff = ActivityLogger::diff($user);
+        if (! empty($diff)) {
+            ActivityLogger::log(
+                'users.updated',
+                $user,
+                "Изменён пользователь {$user->full_name}",
+                $diff
+            );
+        }
+
+        if ($passwordChanged) {
+            ActivityLogger::log(
+                'users.password_reset',
+                $user,
+                "Сброшен пароль пользователю {$user->full_name}"
+            );
+        }
 
         return redirect()
             ->route('users.show', $user)

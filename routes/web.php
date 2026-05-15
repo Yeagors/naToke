@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\CarController;
 use App\Http\Controllers\CarTransactionController;
 use App\Http\Controllers\DashboardController;
@@ -55,6 +56,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/rentals/{rental}/pause', [RentalController::class, 'pause'])->name('rentals.pause');
         Route::post('/rentals/{rental}/resume', [RentalController::class, 'resume'])->name('rentals.resume');
         Route::post('/rentals/{rental}/close', [RentalController::class, 'close'])->name('rentals.close');
+
+        // Activity logs (audit)
+        Route::get('/logs', [ActivityLogController::class, 'index'])->name('logs.index');
     });
 });
 

@@ -8,6 +8,7 @@ use App\Enums\TransactionType;
 use App\Models\CarTransaction;
 use App\Models\Rental;
 use App\Models\Transaction;
+use App\Services\ActivityLogger;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -128,6 +129,20 @@ class ProcessRentalCharges extends Command
         $rental->last_charged_at = now();
         $rental->next_charge_at = $rental->computeNextChargeFrom($rental->next_charge_at);
         $rental->save();
+
+        // 5. Audit log (actor = null → "system")
+        ActivityLogger::log(
+            'cron.rental_charge',
+            $rental,
+            sprintf(
+                'Списание по аренде #%d · %s ₽ с %s, +%s ₽ на %s',
+                $rental->id,
+                number_format($amount, 2, '.', ' '),
+                $user->short_name,
+                number_format($amount, 2, '.', ' '),
+                $car->display_name,
+            ),
+        );
 
         $this->line("  ✓ Rental #{$rental->id}: -{$amount} ₽ user → +{$amount} ₽ car (next: {$rental->next_charge_at->format('d.m.Y H:i')})");
     }
