@@ -161,31 +161,64 @@
                     @endif
                 </section>
 
-                {{-- Rental history --}}
-                @if($car->rentals->count() > ($active ? 1 : 0))
-                    <section class="glass rounded-2xl p-6">
-                        <h2 class="text-lg font-display font-bold mb-4">История аренд</h2>
-                        <div class="overflow-x-auto">
+                {{-- Rental history of THIS car --}}
+                @php
+                    $historyRentals = $car->rentals->reject(fn ($r) => $active && $r->id === $active->id)->values();
+                    $totalRentals = $car->rentals->count();
+                    $closedCount = $car->rentals->where('status.value', 'closed')->count();
+                    $totalEarned = $car->carTransactions->where('type.value', 'income')->sum('amount');
+                @endphp
+                <section class="glass rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                        <h2 class="text-lg font-display font-bold">История аренд этого авто</h2>
+                        <div class="flex items-center gap-3 text-xs">
+                            <span class="text-ink-300">Всего аренд:</span>
+                            <span class="text-neon-cyan font-semibold">{{ $totalRentals }}</span>
+                            <span class="text-ink-300">·</span>
+                            <span class="text-ink-300">Закрытых:</span>
+                            <span class="text-ink-100 font-semibold">{{ $closedCount }}</span>
+                            <span class="text-ink-300">·</span>
+                            <span class="text-ink-300">Заработано:</span>
+                            <span class="text-neon-lime font-semibold font-mono">{{ number_format((float) $totalEarned, 2, '.', ' ') }} ₽</span>
+                        </div>
+                    </div>
+
+                    @if($historyRentals->isEmpty())
+                        <div class="text-sm text-ink-300 py-6 text-center border border-dashed border-white/10 rounded-xl">
+                            @if($active)
+                                Кроме текущей аренды #{{ $active->id }} истории пока нет.
+                            @else
+                                По этому авто ещё не было ни одной аренды.
+                            @endif
+                        </div>
+                    @else
+                        <div class="overflow-x-auto -mx-6 px-6">
                             <table class="data-table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Арендатор</th>
+                                        <th>Тариф</th>
                                         <th>Период</th>
                                         <th>Статус</th>
                                         <th class="text-right">Сумма</th>
-                                        <th></th>
+                                        <th class="w-8"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($car->rentals as $r)
-                                        @if($active && $r->id === $active->id) @continue @endif
+                                    @foreach($historyRentals as $r)
                                         <tr onclick="location.href='{{ route('rentals.show', $r) }}'" class="cursor-pointer group">
                                             <td class="font-mono text-xs">{{ $r->id }}</td>
-                                            <td class="text-sm">{{ $r->user?->short_name }}</td>
+                                            <td class="text-sm">
+                                                <div class="font-medium group-hover:text-neon-cyan transition">{{ $r->user?->short_name ?? '—' }}</div>
+                                                @if($r->user?->phone)
+                                                    <div class="text-xs text-ink-300 font-mono">{{ $r->user->phone }}</div>
+                                                @endif
+                                            </td>
+                                            <td class="text-sm text-ink-200">{{ $r->tariff?->name ?? '—' }}</td>
                                             <td class="text-xs text-ink-300">
-                                                {{ $r->started_at?->format('d.m.Y') }} →
-                                                {{ optional($r->closed_at)->format('d.m.Y') ?? '…' }}
+                                                {{ $r->started_at?->format('d.m.Y H:i') }} →
+                                                {{ optional($r->closed_at)->format('d.m.Y H:i') ?? '…' }}
                                             </td>
                                             <td><span class="badge {{ $r->status->badgeClass() }}">{{ $r->status->label() }}</span></td>
                                             <td class="text-right font-mono">{{ number_format((float) $r->amount, 2, '.', ' ') }} ₽</td>
@@ -195,8 +228,8 @@
                                 </tbody>
                             </table>
                         </div>
-                    </section>
-                @endif
+                    @endif
+                </section>
 
                 {{-- Edit car form --}}
                 <form method="POST" action="{{ route('cars.update', $car) }}" enctype="multipart/form-data" class="glass rounded-2xl p-6 space-y-5">
@@ -347,34 +380,38 @@
                                        placeholder="Поиск по ФИО или телефону…"
                                        class="block w-full rounded-xl border-white/10 bg-ink-800/70 text-ink-100 pl-9 focus:border-neon-cyan focus:ring-neon-cyan">
                                 <svg class="absolute left-3 top-3 w-4 h-4 text-ink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
-                            </div>
-                            <div x-show="open && results.length > 0" @click.outside="open = false"
-                                 class="mt-2 max-h-72 overflow-y-auto rounded-xl border border-white/10 bg-ink-900/95 backdrop-blur-xl divide-y divide-white/5">
-                                <template x-for="u in results" :key="u.id">
-                                    <button type="button" @click="pick(u)"
-                                            class="w-full text-left flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition">
-                                        <template x-if="u.photo_url">
-                                            <img :src="u.photo_url" class="w-8 h-8 rounded-full object-cover">
-                                        </template>
-                                        <template x-if="!u.photo_url">
-                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                                                 style="background-image: linear-gradient(135deg, #00d4ff, #a855f7);">
-                                                <span x-text="u.initials"></span>
+
+                                {{-- Dropdown is absolutely positioned so it does NOT push the tariff select below it --}}
+                                <div x-show="open && results.length > 0"
+                                     @click.outside="open = false"
+                                     x-cloak
+                                     class="absolute left-0 right-0 top-full mt-1 z-[60] max-h-72 overflow-y-auto rounded-xl border border-white/10 bg-ink-900/95 backdrop-blur-xl shadow-2xl divide-y divide-white/5">
+                                    <template x-for="u in results" :key="u.id">
+                                        <button type="button" @click="pick(u)"
+                                                class="w-full text-left flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition">
+                                            <template x-if="u.photo_url">
+                                                <img :src="u.photo_url" class="w-8 h-8 rounded-full object-cover">
+                                            </template>
+                                            <template x-if="!u.photo_url">
+                                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                                                     style="background-image: linear-gradient(135deg, #00d4ff, #a855f7);">
+                                                    <span x-text="u.initials"></span>
+                                                </div>
+                                            </template>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-sm font-medium truncate" x-text="u.full_name"></div>
+                                                <div class="text-xs text-ink-300 truncate">
+                                                    <span x-text="'@' + u.login"></span>
+                                                    <template x-if="u.phone"><span> · <span x-text="u.phone"></span></span></template>
+                                                </div>
                                             </div>
-                                        </template>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="text-sm font-medium truncate" x-text="u.full_name"></div>
-                                            <div class="text-xs text-ink-300 truncate">
-                                                <span x-text="'@' + u.login"></span>
-                                                <template x-if="u.phone"><span> · <span x-text="u.phone"></span></span></template>
-                                            </div>
-                                        </div>
-                                        <span class="badge" :class="u.role === 'admin' ? 'badge-admin' : 'badge-driver'" x-text="u.role"></span>
-                                    </button>
-                                </template>
+                                            <span class="badge shrink-0" :class="u.role === 'admin' ? 'badge-admin' : 'badge-driver'" x-text="u.role"></span>
+                                        </button>
+                                    </template>
+                                </div>
                             </div>
                             <p x-show="open && !loading && query && results.length === 0" class="text-xs text-ink-300 mt-2">Ничего не нашлось.</p>
-                            <p x-show="loading" class="text-xs text-ink-300 mt-2">Ищу…</p>
+                            <p x-show="loading" x-cloak class="text-xs text-ink-300 mt-2">Ищу…</p>
                         </div>
 
                         <div x-show="selected" x-cloak class="flex items-center gap-3 rounded-xl border border-neon-cyan/30 bg-neon-cyan/5 px-3 py-2.5">
@@ -422,16 +459,10 @@
                     </div>
 
                     <div>
-                        <x-input-label for="started_at" :value="'Дата и время начала'" />
-                        <x-text-input id="started_at" type="datetime-local" name="started_at" :value="old('started_at')" />
-                        <p class="text-xs text-ink-300 mt-1">Пусто = сейчас.</p>
-                        <x-input-error :messages="$errors->get('started_at')" />
-                    </div>
-
-                    <div>
                         <x-input-label for="comment" :value="'Комментарий'" />
                         <textarea id="comment" name="comment" rows="2" maxlength="2000"
                                   class="block w-full rounded-xl border-white/10 bg-ink-800/70 text-ink-100 focus:border-neon-cyan focus:ring-neon-cyan">{{ old('comment') }}</textarea>
+                        <p class="text-xs text-ink-300 mt-1">Аренда стартует прямо сейчас — первое периодическое списание произойдёт через один период.</p>
                     </div>
                 </div>
 

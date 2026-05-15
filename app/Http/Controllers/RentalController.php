@@ -11,12 +11,54 @@ use App\Models\Tariff;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class RentalController extends Controller
 {
+    public function index(Request $request): View
+    {
+        $status = (string) $request->query('status', 'all');
+        $q = trim((string) $request->query('q', ''));
+
+        $counts = [
+            'all'    => Rental::count(),
+            'open'   => Rental::where('status', RentalStatus::Open->value)->count(),
+            'paused' => Rental::where('status', RentalStatus::Paused->value)->count(),
+            'closed' => Rental::where('status', RentalStatus::Closed->value)->count(),
+        ];
+
+        $query = Rental::query()
+            ->with(['car', 'user', 'tariff'])
+            ->latest('id');
+
+        if (in_array($status, ['open', 'paused', 'closed'], true)) {
+            $query->where('status', $status);
+        }
+
+        if ($q !== '') {
+            $query->where(function ($w) use ($q) {
+                $w->whereHas('user', function ($uq) use ($q) {
+                    $uq->where('last_name', 'like', "%{$q}%")
+                        ->orWhere('first_name', 'like', "%{$q}%")
+                        ->orWhere('middle_name', 'like', "%{$q}%")
+                        ->orWhere('login', 'like', "%{$q}%")
+                        ->orWhere('phone', 'like', "%{$q}%");
+                })->orWhereHas('car', function ($cq) use ($q) {
+                    $cq->where('license_plate', 'like', "%{$q}%")
+                        ->orWhere('brand', 'like', "%{$q}%")
+                        ->orWhere('model', 'like', "%{$q}%");
+                });
+            });
+        }
+
+        $rentals = $query->paginate(20)->withQueryString();
+
+        return view('rentals.index', compact('rentals', 'status', 'counts', 'q'));
+    }
+
     public function show(Rental $rental): View
     {
         $rental->load([

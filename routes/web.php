@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/tariffs/{tariff}', [TariffController::class, 'update'])->name('tariffs.update');
 
         // Rentals
+        Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
         Route::get('/rentals/{rental}', [RentalController::class, 'show'])->name('rentals.show');
         Route::post('/rentals/{rental}/pause', [RentalController::class, 'pause'])->name('rentals.pause');
         Route::post('/rentals/{rental}/resume', [RentalController::class, 'resume'])->name('rentals.resume');
