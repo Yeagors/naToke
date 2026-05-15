@@ -5,10 +5,11 @@
     $balancePositive = $balance >= 0;
 @endphp
 <nav x-data="{ open: false }" class="relative z-20 border-b border-white/5 backdrop-blur-xl bg-ink-950/60">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {{-- Wider container, smaller side padding — keeps tabs/balance/avatar on one row even on 1024-1280px screens --}}
+    <div class="w-full px-3 sm:px-4">
         <div class="flex h-16 items-center justify-between gap-3">
             {{-- Logo + primary nav --}}
-            <div class="flex items-center gap-4 min-w-0">
+            <div class="flex items-center gap-3 min-w-0">
                 <a href="{{ route('dashboard') }}" class="group flex items-center gap-2.5 flex-shrink-0">
                     <svg class="w-8 h-8" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <defs>
@@ -24,8 +25,8 @@
                     <span class="font-display font-bold text-lg tracking-tight"><span class="text-gradient">naToke</span></span>
                 </a>
 
-                {{-- Tabs visible only on >=lg (1024px). Below that, burger menu. --}}
-                <div class="hidden lg:flex items-center gap-0.5 flex-wrap">
+                {{-- Tabs strictly one row (no wrap). Below lg, burger menu. --}}
+                <div class="hidden lg:flex items-center gap-0.5 flex-nowrap">
                     <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
                         Дашборд
