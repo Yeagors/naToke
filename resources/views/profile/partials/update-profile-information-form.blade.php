@@ -1,64 +1,77 @@
-<section>
-    <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
-        </p>
+<section class="glass rounded-2xl p-6">
+    <header class="mb-4">
+        <h2 class="text-lg font-display font-bold">Личные данные</h2>
+        <p class="text-sm text-ink-300">Обновите ФИО, паспортные данные и логин.</p>
     </header>
 
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
+    <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="space-y-5">
         @csrf
-    </form>
+        @method('PATCH')
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
-        @csrf
-        @method('patch')
-
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+                <x-input-label for="last_name" :value="'Фамилия'" />
+                <x-text-input id="last_name" type="text" name="last_name" :value="old('last_name', $user->last_name)" required />
+                <x-input-error :messages="$errors->get('last_name')" />
+            </div>
+            <div>
+                <x-input-label for="first_name" :value="'Имя'" />
+                <x-text-input id="first_name" type="text" name="first_name" :value="old('first_name', $user->first_name)" required />
+                <x-input-error :messages="$errors->get('first_name')" />
+            </div>
+            <div>
+                <x-input-label for="middle_name" :value="'Отчество'" />
+                <x-text-input id="middle_name" type="text" name="middle_name" :value="old('middle_name', $user->middle_name)" />
+                <x-input-error :messages="$errors->get('middle_name')" />
+            </div>
         </div>
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+                <x-input-label for="birth_date" :value="'Дата рождения'" />
+                <x-text-input id="birth_date" type="date" name="birth_date" :value="old('birth_date', optional($user->birth_date)->format('Y-m-d'))" />
+                <x-input-error :messages="$errors->get('birth_date')" />
+            </div>
+            <div>
+                <x-input-label for="login" :value="'Логин'" />
+                <x-text-input id="login" type="text" name="login" :value="old('login', $user->login)" required />
+                <x-input-error :messages="$errors->get('login')" />
+            </div>
+        </div>
 
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+        <fieldset class="rounded-xl border border-white/8 px-4 py-3">
+            <legend class="px-2 text-xs uppercase tracking-[0.18em] text-ink-300">Паспортные данные</legend>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                 <div>
-                    <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
+                    <x-input-label for="passport_series" :value="'Серия'" />
+                    <x-text-input id="passport_series" type="text" name="passport_series" :value="old('passport_series', $user->passport_series)" maxlength="10" />
+                    <x-input-error :messages="$errors->get('passport_series')" />
                 </div>
-            @endif
-        </div>
+                <div>
+                    <x-input-label for="passport_number" :value="'Номер'" />
+                    <x-text-input id="passport_number" type="text" name="passport_number" :value="old('passport_number', $user->passport_number)" maxlength="20" />
+                    <x-input-error :messages="$errors->get('passport_number')" />
+                </div>
+                <div class="sm:col-span-2">
+                    <x-input-label for="passport_issued_by" :value="'Кем выдан'" />
+                    <x-text-input id="passport_issued_by" type="text" name="passport_issued_by" :value="old('passport_issued_by', $user->passport_issued_by)" />
+                    <x-input-error :messages="$errors->get('passport_issued_by')" />
+                </div>
+                <div>
+                    <x-input-label for="passport_issued_at" :value="'Когда выдан'" />
+                    <x-text-input id="passport_issued_at" type="date" name="passport_issued_at" :value="old('passport_issued_at', optional($user->passport_issued_at)->format('Y-m-d'))" />
+                    <x-input-error :messages="$errors->get('passport_issued_at')" />
+                </div>
+                <div>
+                    <x-input-label for="passport_department_code" :value="'Код подразделения'" />
+                    <x-text-input id="passport_department_code" type="text" name="passport_department_code" :value="old('passport_department_code', $user->passport_department_code)" maxlength="10" />
+                    <x-input-error :messages="$errors->get('passport_department_code')" />
+                </div>
+            </div>
+        </fieldset>
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
-            @endif
+        <div class="flex justify-end pt-2">
+            <x-primary-button>Сохранить изменения</x-primary-button>
         </div>
     </form>
 </section>

@@ -6,19 +6,38 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+
+            // Authentication
+            $table->string('login')->unique();
             $table->string('password');
+
+            // Personal
+            $table->string('last_name');
+            $table->string('first_name');
+            $table->string('middle_name')->nullable();
+            $table->date('birth_date')->nullable();
+
+            // Passport
+            $table->string('passport_series', 10)->nullable();
+            $table->string('passport_number', 20)->nullable();
+            $table->string('passport_issued_by')->nullable();
+            $table->date('passport_issued_at')->nullable();
+            $table->string('passport_department_code', 10)->nullable();
+
+            // Role & money
+            $table->enum('role', ['admin', 'driver'])->default('driver');
+            $table->decimal('balance', 12, 2)->default(0);
+            $table->string('photo')->nullable();
+
             $table->rememberToken();
             $table->timestamps();
+
+            $table->index('role');
+            $table->index(['last_name', 'first_name']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -37,9 +56,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');
