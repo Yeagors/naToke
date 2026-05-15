@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -69,6 +70,35 @@ class UserController extends Controller
             'user' => $user,
             'roles' => UserRole::cases(),
         ]);
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+        $query = User::query()->orderBy('last_name')->limit(20);
+
+        if ($q !== '') {
+            $query->where(function ($w) use ($q) {
+                $w->where('login', 'like', "%{$q}%")
+                    ->orWhere('last_name', 'like', "%{$q}%")
+                    ->orWhere('first_name', 'like', "%{$q}%")
+                    ->orWhere('middle_name', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%");
+            });
+        }
+
+        return response()->json(
+            $query->get()->map(fn (User $u) => [
+                'id' => $u->id,
+                'full_name' => $u->full_name,
+                'short_name' => $u->short_name,
+                'login' => $u->login,
+                'phone' => $u->phone,
+                'role' => $u->role->value,
+                'photo_url' => $u->photo_url,
+                'initials' => mb_substr($u->first_name, 0, 1).mb_substr($u->last_name, 0, 1),
+            ])->values()
+        );
     }
 
     public function update(StoreUserRequest $request, User $user): RedirectResponse

@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\RentalStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 
 class Car extends Model
@@ -26,6 +29,23 @@ class Car extends Model
             'balance' => 'decimal:2',
             'battery_capacity' => 'integer',
         ];
+    }
+
+    public function rentals(): HasMany
+    {
+        return $this->hasMany(Rental::class)->latest();
+    }
+
+    public function activeRental(): HasOne
+    {
+        return $this->hasOne(Rental::class)
+            ->whereIn('status', [RentalStatus::Open->value, RentalStatus::Paused->value])
+            ->latestOfMany();
+    }
+
+    public function carTransactions(): HasMany
+    {
+        return $this->hasMany(CarTransaction::class)->latest();
     }
 
     public function getDisplayNameAttribute(): string

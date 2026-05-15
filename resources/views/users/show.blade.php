@@ -110,12 +110,20 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <x-input-label for="birth_date" :value="'Дата рождения'" />
                             <x-text-input id="birth_date" type="date" name="birth_date" :value="old('birth_date', optional($user->birth_date)->format('Y-m-d'))" />
                             <x-input-error :messages="$errors->get('birth_date')" />
                         </div>
+                        <div>
+                            <x-input-label for="phone" :value="'Телефон'" />
+                            <x-text-input id="phone" type="tel" name="phone" :value="old('phone', $user->phone)" maxlength="32" placeholder="+7…" />
+                            <x-input-error :messages="$errors->get('phone')" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <x-input-label for="login" :value="'Логин *'" />
                             <x-text-input id="login" type="text" name="login" :value="old('login', $user->login)" required />

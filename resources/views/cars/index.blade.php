@@ -38,13 +38,14 @@
                             <th>Год</th>
                             <th>Аккумулятор</th>
                             <th class="text-right">Баланс</th>
-                            <th>Комментарий</th>
+                            <th>Аренда</th>
                             <th>Добавлено</th>
+                            <th class="w-8"></th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($cars as $c)
-                            <tr>
+                            <tr onclick="location.href='{{ route('cars.show', $c) }}'" class="cursor-pointer group">
                                 <td class="text-ink-300 font-mono text-xs">{{ $c->id }}</td>
                                 <td>
                                     <div class="flex items-center gap-3">
@@ -56,7 +57,7 @@
                                             </div>
                                         @endif
                                         <div>
-                                            <div class="font-medium">{{ $c->display_name }}</div>
+                                            <div class="font-medium group-hover:text-neon-cyan transition">{{ $c->display_name }}</div>
                                             <div class="text-xs text-ink-300">id: {{ $c->id }}</div>
                                         </div>
                                     </div>
@@ -74,11 +75,20 @@
                                 <td class="text-right font-mono font-semibold {{ (float) $c->balance >= 0 ? 'text-neon-lime' : 'text-neon-red' }}">
                                     {{ number_format((float) $c->balance, 2, '.', ' ') }} ₽
                                 </td>
-                                <td class="text-sm text-ink-200 max-w-xs truncate">{{ $c->comment ?? '—' }}</td>
+                                <td>
+                                    @if($c->active_rentals_count > 0)
+                                        <span class="badge badge-deposit">в аренде</span>
+                                    @else
+                                        <span class="badge badge-driver">свободен</span>
+                                    @endif
+                                </td>
                                 <td class="text-sm text-ink-300">{{ $c->created_at?->format('d.m.Y') }}</td>
+                                <td class="text-right pr-4">
+                                    <svg class="w-4 h-4 inline text-ink-400 group-hover:text-neon-cyan transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </td>
                             </tr>
                         @empty
-                            <tr><td colspan="8" class="text-center py-10 text-ink-300">Парк пуст</td></tr>
+                            <tr><td colspan="9" class="text-center py-10 text-ink-300">Парк пуст</td></tr>
                         @endforelse
                     </tbody>
                 </table>

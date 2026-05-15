@@ -20,6 +20,7 @@ class ProfileUpdateRequest extends FormRequest
             'last_name' => ['required', 'string', 'max:255'],
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
             'birth_date' => ['nullable', 'date', 'before:today'],
             'passport_series' => ['nullable', 'string', 'max:10'],
             'passport_number' => ['nullable', 'string', 'max:20'],

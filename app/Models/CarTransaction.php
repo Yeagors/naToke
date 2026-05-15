@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
-use App\Enums\TransactionType;
+use App\Enums\CarTransactionType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Transaction extends Model
+class CarTransaction extends Model
 {
     protected $fillable = [
-        'user_id',
+        'car_id',
         'rental_id',
         'type',
         'amount',
@@ -21,15 +21,15 @@ class Transaction extends Model
     protected function casts(): array
     {
         return [
-            'type' => TransactionType::class,
+            'type' => CarTransactionType::class,
             'amount' => 'decimal:2',
             'balance_after' => 'decimal:2',
         ];
     }
 
-    public function user(): BelongsTo
+    public function car(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Car::class);
     }
 
     public function rental(): BelongsTo
@@ -44,7 +44,7 @@ class Transaction extends Model
 
     public function getSignedAmountAttribute(): string
     {
-        $sign = $this->type === TransactionType::Deposit ? '+' : '-';
+        $sign = $this->type === CarTransactionType::Income ? '+' : '-';
         return $sign . number_format((float) $this->amount, 2, '.', ' ');
     }
 }

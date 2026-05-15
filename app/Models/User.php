@@ -19,6 +19,7 @@ class User extends Authenticatable
         'last_name',
         'first_name',
         'middle_name',
+        'phone',
         'birth_date',
         'passport_series',
         'passport_number',
@@ -49,6 +50,11 @@ class User extends Authenticatable
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class)->latest();
+    }
+
+    public function rentals(): HasMany
+    {
+        return $this->hasMany(Rental::class)->latest();
     }
 
     public function getFullNameAttribute(): string
