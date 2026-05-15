@@ -6,6 +6,7 @@ use App\Http\Controllers\CarTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RentalController;
+use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TariffController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
@@ -59,6 +60,9 @@ Route::middleware('auth')->group(function () {
 
         // Activity logs (audit)
         Route::get('/logs', [ActivityLogController::class, 'index'])->name('logs.index');
+
+        // Stats / dashboard analytics
+        Route::get('/stats', [StatsController::class, 'index'])->name('stats.index');
     });
 
     // Rental show — accessible by admin OR the renter (ownership check inside controller)
