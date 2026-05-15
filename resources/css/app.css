@@ -234,7 +234,10 @@
 
     /* Nav link */
     .nav-link {
-        @apply relative inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-ink-200 transition-all duration-200;
+        @apply relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium text-ink-200 transition-all duration-200 whitespace-nowrap;
+    }
+    @media (min-width: 1280px) {
+        .nav-link { @apply gap-2 px-3 py-2 text-sm; }
     }
     .nav-link:hover {
         color: theme('colors.ink.100');

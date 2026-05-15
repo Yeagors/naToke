@@ -107,15 +107,15 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th class="w-40">Время</th>
-                            <th class="w-32">Источник</th>
+                            <th class="w-40 whitespace-nowrap">Время</th>
+                            <th class="w-24 whitespace-nowrap">Источник</th>
                             <th>Объект</th>
-                            <th class="w-40">Действие</th>
-                            <th class="text-right w-32">Сумма</th>
-                            <th class="text-right w-32">Баланс после</th>
-                            <th class="w-32">Аренда</th>
+                            <th class="w-40 whitespace-nowrap">Действие</th>
+                            <th class="text-right w-44 whitespace-nowrap">Сумма</th>
+                            <th class="text-right w-44 whitespace-nowrap">Баланс&nbsp;после</th>
+                            <th class="w-24 whitespace-nowrap">Аренда</th>
                             <th>Комментарий</th>
-                            <th class="w-32">Автор</th>
+                            <th class="w-32 whitespace-nowrap">Автор</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -148,10 +148,10 @@
                                 <td>
                                     <span class="badge {{ $row['type_class'] }}">{{ $row['type_label'] }}</span>
                                 </td>
-                                <td class="text-right font-mono font-semibold {{ $row['sign'] === '+' ? 'text-neon-lime' : 'text-neon-red' }}">
+                                <td class="text-right font-mono font-semibold whitespace-nowrap {{ $row['sign'] === '+' ? 'text-neon-lime' : 'text-neon-red' }}">
                                     {{ $row['sign'] }}{{ number_format($row['amount'], 2, '.', ' ') }} ₽
                                 </td>
-                                <td class="text-right font-mono text-xs text-ink-200">
+                                <td class="text-right font-mono text-xs whitespace-nowrap {{ ($row['balance_after'] ?? 0) >= 0 ? 'text-ink-200' : 'text-neon-red' }}">
                                     @if($row['balance_after'] !== null)
                                         {{ number_format($row['balance_after'], 2, '.', ' ') }} ₽
                                     @else

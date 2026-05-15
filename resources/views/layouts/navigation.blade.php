@@ -1,13 +1,15 @@
 @php
     $user = auth()->user();
     $isAdmin = $user?->isAdmin();
+    $balance = (float) ($user->balance ?? 0);
+    $balancePositive = $balance >= 0;
 @endphp
 <nav x-data="{ open: false }" class="relative z-20 border-b border-white/5 backdrop-blur-xl bg-ink-950/60">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex h-16 items-center justify-between gap-4">
+        <div class="flex h-16 items-center justify-between gap-3">
             {{-- Logo + primary nav --}}
-            <div class="flex items-center gap-8">
-                <a href="{{ route('dashboard') }}" class="group flex items-center gap-2.5">
+            <div class="flex items-center gap-4 min-w-0">
+                <a href="{{ route('dashboard') }}" class="group flex items-center gap-2.5 flex-shrink-0">
                     <svg class="w-8 h-8" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <linearGradient id="lgNav" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
@@ -22,7 +24,8 @@
                     <span class="font-display font-bold text-lg tracking-tight"><span class="text-gradient">naToke</span></span>
                 </a>
 
-                <div class="hidden md:flex items-center gap-1">
+                {{-- Tabs visible only on >=lg (1024px). Below that, burger menu. --}}
+                <div class="hidden lg:flex items-center gap-0.5 flex-wrap">
                     <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
                         Дашборд
@@ -58,13 +61,16 @@
             </div>
 
             {{-- Right side --}}
-            <div class="hidden md:flex items-center gap-3">
-                {{-- Balance pill --}}
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 shadow-glow-cyan">
-                    <span class="inline-block w-2 h-2 rounded-full bg-neon-lime animate-pulse"></span>
-                    <span class="text-xs uppercase tracking-wider text-ink-300">Баланс</span>
-                    <span class="font-mono font-semibold text-neon-lime">{{ number_format((float) $user->balance, 2, '.', ' ') }} ₽</span>
-                </div>
+            <div class="hidden sm:flex items-center gap-2 flex-shrink-0">
+                {{-- Balance pill (color reflects sign of balance, never shrinks) --}}
+                <a href="{{ route('profile.edit') }}" title="Перейти в профиль"
+                   class="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border whitespace-nowrap flex-shrink-0 transition
+                          {{ $balancePositive ? 'border-white/10 hover:border-neon-lime/40' : 'border-neon-red/30 hover:border-neon-red/60' }}">
+                    <span class="inline-block w-2 h-2 rounded-full animate-pulse {{ $balancePositive ? 'bg-neon-lime' : 'bg-neon-red' }}"></span>
+                    <span class="font-mono font-semibold {{ $balancePositive ? 'text-neon-lime' : 'text-neon-red' }}">
+                        {{ number_format($balance, 2, '.', ' ') }} ₽
+                    </span>
+                </a>
 
                 {{-- User dropdown --}}
                 <div x-data="{ menu: false }" class="relative">
@@ -108,15 +114,15 @@
                 </div>
             </div>
 
-            {{-- Mobile burger --}}
-            <button @click="open = !open" class="md:hidden p-2 rounded-lg text-ink-100 hover:bg-white/5">
+            {{-- Hamburger: shown below 1024px (tablet/mobile) --}}
+            <button @click="open = !open" class="lg:hidden p-2 rounded-lg text-ink-100 hover:bg-white/5 flex-shrink-0">
                 <svg x-show="!open" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 <svg x-show="open" x-cloak class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
-        {{-- Mobile menu --}}
-        <div x-show="open" x-transition x-cloak class="md:hidden pb-4">
+        {{-- Mobile / tablet menu (visible below lg, opened via burger) --}}
+        <div x-show="open" x-transition x-cloak class="lg:hidden pb-4">
             <div class="flex flex-col gap-1">
                 <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">Дашборд</a>
                 @if($isAdmin)
@@ -128,9 +134,10 @@
                     <a href="{{ route('logs.index') }}" class="nav-link {{ request()->routeIs('logs.*') ? 'active' : '' }}">Логи</a>
                 @endif
                 <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">Профиль</a>
-                <div class="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                {{-- Balance line shows only on phones (sm:hidden), since on tablet+ the top pill is visible --}}
+                <div class="sm:hidden mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border {{ $balancePositive ? 'border-white/10' : 'border-neon-red/30' }}">
                     <span class="text-xs uppercase tracking-wider text-ink-300">Баланс</span>
-                    <span class="ml-auto font-mono font-semibold text-neon-lime">{{ number_format((float) $user->balance, 2, '.', ' ') }} ₽</span>
+                    <span class="ml-auto font-mono font-semibold {{ $balancePositive ? 'text-neon-lime' : 'text-neon-red' }}">{{ number_format($balance, 2, '.', ' ') }} ₽</span>
                 </div>
                 <form method="POST" action="{{ route('logout') }}" class="mt-2">
                     @csrf
