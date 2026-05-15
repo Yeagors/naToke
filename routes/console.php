@@ -9,9 +9,11 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Rentals: try to charge active rentals every hour at minute 0 (Europe/Moscow)
+// Rentals: try to charge active rentals every minute (Europe/Moscow).
+// The command itself only fires charges that are actually due (next_charge_at <= now),
+// so running every minute simply gives sub-minute precision.
 Schedule::command(ProcessRentalCharges::class)
-    ->hourlyAt(0)
+    ->everyMinute()
     ->timezone('Europe/Moscow')
     ->withoutOverlapping()
     ->onOneServer()

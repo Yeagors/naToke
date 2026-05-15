@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
         Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
         Route::post('/users/{user}/transactions', [TransactionController::class, 'store'])->name('transactions.store');
 
         // Cars
