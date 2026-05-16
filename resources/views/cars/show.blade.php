@@ -35,14 +35,48 @@
 
             {{-- Left: photo + balance + car transactions --}}
             <div class="lg:col-span-1 flex flex-col gap-6">
+                {{-- Photo card with quick upload --}}
                 <div class="glass rounded-2xl p-6">
-                    @if($car->photo)
-                        <img src="{{ $car->photo_url }}" class="w-full aspect-video rounded-xl object-cover ring-1 ring-white/10" alt="">
-                    @else
-                        <div class="w-full aspect-video rounded-xl flex items-center justify-center bg-white/5 ring-1 ring-white/10">
-                            <svg class="w-12 h-12 text-ink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10l1.5-4.5h-5L11 10m-1 4h4m-7 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H7a2 2 0 00-2 2v4a2 2 0 002 2z"/></svg>
+                    <form method="POST" action="{{ route('cars.update', $car) }}" enctype="multipart/form-data" id="car-photo-form">
+                        @csrf
+                        @method('PATCH')
+                        {{-- Preserve all other fields so validation passes and DB columns stay intact --}}
+                        <input type="hidden" name="brand" value="{{ $car->brand }}">
+                        <input type="hidden" name="model" value="{{ $car->model }}">
+                        <input type="hidden" name="year" value="{{ $car->year }}">
+                        <input type="hidden" name="license_plate" value="{{ $car->license_plate }}">
+                        <input type="hidden" name="balance" value="{{ $car->balance }}">
+                        <input type="hidden" name="battery_capacity" value="{{ $car->battery_capacity }}">
+                        <input type="hidden" name="battery_number" value="{{ $car->battery_number }}">
+                        <input type="hidden" name="comment" value="{{ $car->comment }}">
+
+                        <div class="relative group">
+                            @if($car->photo)
+                                <img src="{{ $car->photo_url }}" class="w-full aspect-video rounded-xl object-cover ring-1 ring-white/10" alt="">
+                            @else
+                                <div class="w-full aspect-video rounded-xl flex items-center justify-center bg-white/5 ring-1 ring-white/10">
+                                    <svg class="w-12 h-12 text-ink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10l1.5-4.5h-5L11 10m-1 4h4m-7 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H7a2 2 0 00-2 2v4a2 2 0 002 2z"/></svg>
+                                </div>
+                            @endif
+                            <label for="car-photo-input"
+                                   class="absolute inset-0 flex items-center justify-center bg-ink-950/70 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition cursor-pointer rounded-xl">
+                                <div class="text-center">
+                                    <svg class="w-10 h-10 mx-auto text-neon-cyan mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <div class="text-sm font-semibold text-neon-cyan">Сменить фото</div>
+                                </div>
+                            </label>
                         </div>
-                    @endif
+
+                        <input id="car-photo-input" type="file" name="photo" accept="image/*"
+                               class="sr-only"
+                               onchange="document.getElementById('car-photo-form').submit()">
+
+                        <p class="text-xs text-ink-300 mt-3 text-center">
+                            Наведите на фото → клик «Сменить фото».
+                            Поддерживаются jpg/png/webp до 5 МБ. Загружается мгновенно.
+                        </p>
+                        <x-input-error :messages="$errors->get('photo')" />
+                    </form>
                 </div>
 
                 <div class="glass rounded-2xl p-6">
@@ -439,14 +473,14 @@
                         <x-input-error :messages="$errors->get('user_id')" />
                     </div>
 
-                    <div>
+                    <div x-data='{ tariffId: "{{ old('tariff_id') }}", tariffs: @json($tariffs->keyBy('id')) }'>
                         <x-input-label for="tariff_id" :value="'Тариф *'" />
-                        <select id="tariff_id" name="tariff_id" required
+                        <select id="tariff_id" name="tariff_id" required x-model="tariffId"
                                 class="block w-full rounded-xl border-white/10 bg-ink-800/70 text-ink-100 focus:border-neon-cyan focus:ring-neon-cyan">
                             <option value="">— выберите —</option>
                             @forelse($tariffs as $t)
                                 <option value="{{ $t->id }}" @selected(old('tariff_id') == $t->id)>
-                                    {{ $t->name }} · {{ number_format((float) $t->amount, 2, '.', ' ') }} ₽ / {{ $t->period_count }} {{ $t->period->label() }}@if((float) $t->deposit_amount > 0) · депозит {{ number_format((float) $t->deposit_amount, 2, '.', ' ') }} ₽@endif
+                                    {{ $t->name }} · {{ number_format((float) $t->amount, 2, '.', ' ') }} ₽ / {{ $t->period_count }} {{ $t->period->label() }}@if($t->is_buyout) · РАСКАТ{{ $t->buyout_price ? ' '.number_format((float)$t->buyout_price,0,'.',' ').' ₽ за '.$t->buyout_days.' дн.' : '' }}@elseif((float) $t->deposit_amount > 0) · депозит {{ number_format((float) $t->deposit_amount, 2, '.', ' ') }} ₽@endif
                                 </option>
                             @empty
                                 <option value="" disabled>Нет активных тарифов</option>
@@ -456,6 +490,19 @@
                             <p class="text-xs text-neon-red mt-1">Нет ни одного активного тарифа. <a href="{{ route('tariffs.create') }}" class="underline">Создать</a>.</p>
                         @endif
                         <x-input-error :messages="$errors->get('tariff_id')" />
+
+                        {{-- Buyout preview when a buyout tariff is selected --}}
+                        <div x-show="tariffId && tariffs[tariffId] && tariffs[tariffId].is_buyout" x-cloak
+                             class="mt-3 rounded-xl border border-neon-violet/30 bg-neon-violet/10 p-3 text-xs">
+                            <div class="font-semibold text-neon-violet uppercase tracking-wider mb-1">⚡ Раскат на выкуп</div>
+                            <div class="text-ink-100">
+                                Авто перейдёт в собственность арендатора после
+                                <template x-if="tariffs[tariffId]">
+                                    <span><span class="font-mono text-neon-cyan" x-text="tariffs[tariffId]?.buyout_days"></span> платежей на сумму <span class="font-mono text-neon-violet" x-text="parseFloat(tariffs[tariffId]?.buyout_price || 0).toLocaleString('ru-RU', {minimumFractionDigits: 2})"></span> ₽.</span>
+                                </template>
+                                После полной выплаты аренда автоматически закрывается со статусом «выкуплено».
+                            </div>
+                        </div>
                     </div>
 
                     <div>

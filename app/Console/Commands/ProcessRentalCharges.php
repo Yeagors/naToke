@@ -125,25 +125,62 @@ class ProcessRentalCharges extends Command
             'created_by' => null,
         ]);
 
-        // 4. Advance schedule
+        // 4. Buyout (lease-to-own) progress
+        $buyoutMessage = '';
+        $buyoutCompleted = false;
+        if ($rental->is_buyout && $rental->buyout_remaining !== null) {
+            $newRemaining = max(0, (float) $rental->buyout_remaining - $amount);
+            $newDaysRem = max(0, (int) ($rental->buyout_days_remaining ?? 0) - 1);
+            $rental->buyout_remaining = $newRemaining;
+            $rental->buyout_days_remaining = $newDaysRem;
+
+            if ($newRemaining <= 0) {
+                $rental->buyout_completed_at = now();
+                $rental->status = \App\Enums\RentalStatus::Closed;
+                $rental->closed_at = now();
+                $rental->next_charge_at = null;
+                $buyoutCompleted = true;
+                $buyoutMessage = " · ВЫКУП ЗАВЕРШЁН";
+            } else {
+                $buyoutMessage = sprintf(
+                    " · выкуп: осталось %s ₽ / %d дн.",
+                    number_format($newRemaining, 2, '.', ' '),
+                    $newDaysRem,
+                );
+            }
+        }
+
+        // 5. Advance schedule (only if not just auto-closed by buyout)
         $rental->last_charged_at = now();
-        $rental->next_charge_at = $rental->computeNextChargeFrom($rental->next_charge_at);
+        if (! $buyoutCompleted) {
+            $rental->next_charge_at = $rental->computeNextChargeFrom($rental->next_charge_at);
+        }
         $rental->save();
 
-        // 5. Audit log (actor = null → "system")
+        // 6. Audit log (actor = null → "system")
         ActivityLogger::log(
             'cron.rental_charge',
             $rental,
             sprintf(
-                'Списание по аренде #%d · %s ₽ с %s, +%s ₽ на %s',
+                'Списание по аренде #%d · %s ₽ с %s, +%s ₽ на %s%s',
                 $rental->id,
                 number_format($amount, 2, '.', ' '),
                 $user->short_name,
                 number_format($amount, 2, '.', ' '),
                 $car->display_name,
+                $buyoutMessage,
             ),
         );
 
-        $this->line("  ✓ Rental #{$rental->id}: -{$amount} ₽ user → +{$amount} ₽ car (next: {$rental->next_charge_at->format('d.m.Y H:i')})");
+        if ($buyoutCompleted) {
+            ActivityLogger::log(
+                'cron.rental_buyout_completed',
+                $rental,
+                "Авто {$car->display_name} полностью выкуплено арендатором {$user->full_name} (аренда #{$rental->id})"
+            );
+        }
+
+        $this->line("  ✓ Rental #{$rental->id}: -{$amount} ₽ user → +{$amount} ₽ car"
+            . ($buyoutCompleted ? " [BUYOUT DONE — rental closed]" : " (next: {$rental->next_charge_at->format('d.m.Y H:i')})"));
     }
 }

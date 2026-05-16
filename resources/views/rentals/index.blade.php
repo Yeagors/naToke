@@ -93,7 +93,14 @@
                                     @endif
                                 </td>
                                 <td class="text-sm text-ink-200">
-                                    {{ $r->tariff?->name ?? '—' }}
+                                    <div class="flex items-center gap-1.5">
+                                        <span>{{ $r->tariff?->name ?? '—' }}</span>
+                                        @if($r->is_buyout)
+                                            <span class="badge"
+                                                  style="background:rgba(168,85,247,0.12);color:#a855f7;box-shadow:inset 0 0 0 1px rgba(168,85,247,0.30)"
+                                                  title="Раскат">⚡</span>
+                                        @endif
+                                    </div>
                                     <div class="text-xs text-ink-300">
                                         {{ $r->period_count }} {{ $r->period->label() }}
                                     </div>

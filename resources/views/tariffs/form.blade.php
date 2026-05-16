@@ -29,7 +29,18 @@
         @endif
 
         <form method="POST" action="{{ $action }}" class="glass rounded-2xl p-6 space-y-5"
-              x-data='{ extras: {{ $extrasInitial }} }'>
+              x-data='{
+                extras: {{ $extrasInitial }},
+                isBuyout: {{ old('is_buyout', $tariff->is_buyout ?? false) ? 'true' : 'false' }},
+                buyoutPrice: {{ json_encode((string) old('buyout_price', $tariff->buyout_price ?? '')) }},
+                buyoutDays: {{ json_encode((string) old('buyout_days', $tariff->buyout_days ?? '')) }},
+                amount: {{ json_encode((string) old('amount', $tariff->amount ?? '')) }},
+                get projectedTotal() {
+                    const a = parseFloat(this.amount) || 0;
+                    const d = parseInt(this.buyoutDays) || 0;
+                    return (a * d).toFixed(2);
+                }
+              }'>
             @csrf
             @if($isEdit) @method('PATCH') @endif
 
@@ -42,7 +53,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                     <x-input-label for="amount" :value="'Сумма списания (₽) *'" />
-                    <x-text-input id="amount" type="number" step="0.01" min="0" name="amount" :value="old('amount', $tariff->amount)" required />
+                    <x-text-input id="amount" type="number" step="0.01" min="0" name="amount" x-model="amount" :value="old('amount', $tariff->amount)" required />
                     <x-input-error :messages="$errors->get('amount')" />
                 </div>
                 <div>
@@ -108,6 +119,49 @@
                        @checked(old('is_active', $tariff->is_active ?? true))>
                 <span class="text-sm">Активен (доступен для новых аренд)</span>
             </label>
+
+            {{-- Buyout / lease-to-own mode --}}
+            <fieldset class="rounded-xl border border-neon-violet/20 px-4 py-3 bg-neon-violet/5">
+                <legend class="px-2 text-xs uppercase tracking-[0.18em] text-neon-violet">Режим раската (выкуп авто)</legend>
+
+                <label class="flex items-start gap-3 cursor-pointer select-none mt-2">
+                    <input type="hidden" name="is_buyout" value="0">
+                    <input type="checkbox" name="is_buyout" value="1" x-model="isBuyout"
+                           class="mt-0.5 rounded border-white/15 bg-ink-800/70 text-neon-violet focus:ring-neon-violet/40">
+                    <span>
+                        <span class="text-sm font-medium">Этот тариф — раскат на выкуп</span>
+                        <span class="block text-xs text-ink-300 mt-0.5">
+                            Каждое периодическое списание уменьшает остаток выкупной стоимости. Когда остаток доходит до 0 — аренда автоматически закрывается, авто считается выкупленным.
+                        </span>
+                    </span>
+                </label>
+
+                <div x-show="isBuyout" x-collapse class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                    <div>
+                        <x-input-label for="buyout_price" :value="'Выкупная стоимость авто (₽) *'" />
+                        <x-text-input id="buyout_price" type="number" step="0.01" min="0.01" name="buyout_price"
+                                      x-model="buyoutPrice"
+                                      :value="old('buyout_price', $tariff->buyout_price)"
+                                      placeholder="например 90000.00" />
+                        <x-input-error :messages="$errors->get('buyout_price')" />
+                    </div>
+                    <div>
+                        <x-input-label for="buyout_days" :value="'Срок выкупа (дней / периодов) *'" />
+                        <x-text-input id="buyout_days" type="number" min="1" name="buyout_days"
+                                      x-model="buyoutDays"
+                                      :value="old('buyout_days', $tariff->buyout_days)"
+                                      placeholder="например 90" />
+                        <x-input-error :messages="$errors->get('buyout_days')" />
+                    </div>
+                </div>
+
+                <div x-show="isBuyout" x-collapse class="mt-3 text-xs text-ink-300 px-1">
+                    <span x-show="parseFloat(amount) > 0 && parseInt(buyoutDays) > 0">
+                        При сумме <span class="font-mono text-neon-cyan" x-text="amount"></span> ₽ за <span x-text="buyoutDays"></span> платежей это ровно <span class="font-mono text-neon-lime" x-text="projectedTotal"></span> ₽.
+                        Сравните с выкупной стоимостью <span class="font-mono text-neon-violet" x-text="buyoutPrice || '0'"></span> ₽ — если значения совпадают, выкуп закроется ровно за указанный срок.
+                    </span>
+                </div>
+            </fieldset>
 
             <div class="flex items-center justify-end gap-2 pt-2">
                 <a href="{{ route('tariffs.index') }}" class="btn btn-ghost">Отмена</a>

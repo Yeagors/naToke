@@ -26,6 +26,10 @@ class StoreTariffRequest extends FormRequest
             'extras' => ['nullable', 'array'],
             'extras.*.label' => ['required_with:extras.*.amount', 'string', 'max:255'],
             'extras.*.amount' => ['required_with:extras.*.label', 'numeric', 'min:0', 'max:9999999.99'],
+
+            'is_buyout' => ['nullable', 'boolean'],
+            'buyout_price' => ['nullable', 'required_if:is_buyout,1,true', 'numeric', 'min:0.01', 'max:99999999.99'],
+            'buyout_days' => ['nullable', 'required_if:is_buyout,1,true', 'integer', 'min:1', 'max:36500'],
         ];
     }
 
@@ -44,7 +48,14 @@ class StoreTariffRequest extends FormRequest
             }));
             $this->merge(['extras' => $extras]);
         }
-        $this->merge(['is_active' => (bool) $this->input('is_active', false)]);
+        $this->merge([
+            'is_active' => (bool) $this->input('is_active', false),
+            'is_buyout' => (bool) $this->input('is_buyout', false),
+        ]);
+        // If buyout is off, blank out buyout fields so they don't get accidentally saved
+        if (! $this->boolean('is_buyout')) {
+            $this->merge(['buyout_price' => null, 'buyout_days' => null]);
+        }
     }
 
     public function attributes(): array
@@ -56,6 +67,9 @@ class StoreTariffRequest extends FormRequest
             'period_count' => 'количество периодов',
             'deposit_amount' => 'депозит',
             'description' => 'описание',
+            'is_buyout' => 'режим выкупа',
+            'buyout_price' => 'выкупная стоимость',
+            'buyout_days' => 'срок выкупа (дней)',
         ];
     }
 }

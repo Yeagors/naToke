@@ -104,6 +104,13 @@ class RentalController extends Controller
                 'period_count' => $tariff->period_count,
                 'deposit_amount' => $tariff->deposit_amount,
                 'extras' => $tariff->extras,
+                // Buyout (lease-to-own) snapshot — copied from tariff at start so later
+                // changes to the tariff don't affect this rental.
+                'is_buyout' => (bool) $tariff->is_buyout,
+                'buyout_price' => $tariff->is_buyout ? $tariff->buyout_price : null,
+                'buyout_days_total' => $tariff->is_buyout ? $tariff->buyout_days : null,
+                'buyout_remaining' => $tariff->is_buyout ? $tariff->buyout_price : null,
+                'buyout_days_remaining' => $tariff->is_buyout ? $tariff->buyout_days : null,
                 'started_at' => $startedAt,
                 'next_charge_at' => $tariff->period->addTo($startedAt, $tariff->period_count),
                 'comment' => $data['comment'] ?? null,

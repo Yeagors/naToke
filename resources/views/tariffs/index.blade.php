@@ -41,7 +41,14 @@
                             <tr onclick="location.href='{{ route('tariffs.show', $t) }}'" class="cursor-pointer group">
                                 <td class="text-ink-300 font-mono text-xs">{{ $t->id }}</td>
                                 <td>
-                                    <div class="font-medium group-hover:text-neon-cyan transition">{{ $t->name }}</div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="font-medium group-hover:text-neon-cyan transition">{{ $t->name }}</div>
+                                        @if($t->is_buyout)
+                                            <span class="badge"
+                                                  style="background:rgba(168,85,247,0.12);color:#a855f7;box-shadow:inset 0 0 0 1px rgba(168,85,247,0.30)"
+                                                  title="Раскат: выкупная стоимость {{ number_format((float) $t->buyout_price, 2, '.', ' ') }} ₽ за {{ $t->buyout_days }} периодов">⚡ раскат</span>
+                                        @endif
+                                    </div>
                                     @if($t->description)
                                         <div class="text-xs text-ink-300 truncate max-w-xs">{{ $t->description }}</div>
                                     @endif

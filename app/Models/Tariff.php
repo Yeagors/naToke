@@ -17,6 +17,9 @@ class Tariff extends Model
         'extras',
         'description',
         'is_active',
+        'is_buyout',
+        'buyout_price',
+        'buyout_days',
     ];
 
     protected function casts(): array
@@ -28,6 +31,9 @@ class Tariff extends Model
             'period_count' => 'integer',
             'extras' => 'array',
             'is_active' => 'boolean',
+            'is_buyout' => 'boolean',
+            'buyout_price' => 'decimal:2',
+            'buyout_days' => 'integer',
         ];
     }
 

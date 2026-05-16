@@ -105,6 +105,35 @@
                     </div>
                 </{{ $isAdmin ? 'a' : 'div' }}>
 
+                {{-- Buyout progress (lease-to-own) --}}
+                @if($rental->is_buyout)
+                    <div class="glass rounded-2xl p-5 border border-neon-violet/30 shadow-glow-violet">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="stat-label">Раскат / выкуп</div>
+                            @if($rental->isBuyoutCompleted())
+                                <span class="badge badge-deposit">✓ выкуплено</span>
+                            @endif
+                        </div>
+                        <div class="mt-2 space-y-1 text-sm">
+                            <div class="flex justify-between"><span class="text-ink-300">Выкупная стоимость</span><span class="font-mono text-neon-violet">{{ number_format((float) $rental->buyout_price, 2, '.', ' ') }} ₽</span></div>
+                            <div class="flex justify-between"><span class="text-ink-300">Выплачено</span><span class="font-mono text-neon-lime">{{ number_format($rental->buyout_paid, 2, '.', ' ') }} ₽</span></div>
+                            <div class="flex justify-between"><span class="text-ink-300">Остаток к выплате</span><span class="font-mono">{{ number_format((float) ($rental->buyout_remaining ?? 0), 2, '.', ' ') }} ₽</span></div>
+                            <div class="flex justify-between"><span class="text-ink-300">Срок (всего)</span><span>{{ $rental->buyout_days_total ?? 0 }} периодов</span></div>
+                            <div class="flex justify-between"><span class="text-ink-300">Осталось периодов</span><span class="font-mono text-neon-cyan">{{ $rental->buyout_days_remaining ?? 0 }}</span></div>
+                            @if($rental->buyout_completed_at)
+                                <div class="flex justify-between"><span class="text-ink-300">Завершено</span><span class="font-mono text-neon-lime">{{ $rental->buyout_completed_at->format('d.m.Y H:i') }}</span></div>
+                            @endif
+                        </div>
+                        <div class="mt-3">
+                            <div class="h-2 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-neon-cyan via-neon-violet to-neon-pink transition-all duration-500"
+                                     style="width: {{ $rental->buyout_progress_percent }}%"></div>
+                            </div>
+                            <div class="text-xs text-ink-300 mt-1 text-center">{{ $rental->buyout_progress_percent }}% выплачено</div>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Tariff snapshot --}}
                 <div class="glass rounded-2xl p-5">
                     <div class="stat-label mb-2">Тариф (снапшот)</div>

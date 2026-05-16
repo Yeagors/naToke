@@ -80,6 +80,7 @@ class ActivityLog extends Model
             'rentals.resumed' => 'Аренда возобновлена',
             'rentals.closed' => 'Аренда закрыта',
             'cron.rental_charge' => 'Списание по аренде (крон)',
+            'cron.rental_buyout_completed' => 'Авто выкуплено (крон)',
             default => $this->action,
         };
     }
