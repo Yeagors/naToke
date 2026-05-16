@@ -33,12 +33,23 @@
                 extras: {{ $extrasInitial }},
                 isBuyout: {{ old('is_buyout', $tariff->is_buyout ?? false) ? 'true' : 'false' }},
                 buyoutPrice: {{ json_encode((string) old('buyout_price', $tariff->buyout_price ?? '')) }},
-                buyoutDays: {{ json_encode((string) old('buyout_days', $tariff->buyout_days ?? '')) }},
                 amount: {{ json_encode((string) old('amount', $tariff->amount ?? '')) }},
-                get projectedTotal() {
+                periodCount: {{ json_encode((string) old('period_count', $tariff->period_count ?? 1)) }},
+                periodUnit: {{ json_encode((string) old('period', optional($tariff->period)->value ?? 'hour')) }},
+                periodLabels: { minute: "минут", hour: "часов", day: "дней", week: "недель", month: "месяцев" },
+                get computedPayments() {
                     const a = parseFloat(this.amount) || 0;
-                    const d = parseInt(this.buyoutDays) || 0;
-                    return (a * d).toFixed(2);
+                    const p = parseFloat(this.buyoutPrice) || 0;
+                    if (a <= 0 || p <= 0) return 0;
+                    return Math.ceil(p / a);
+                },
+                get periodLabel() {
+                    return this.periodLabels[this.periodUnit] || this.periodUnit;
+                },
+                get estimatedDurationLabel() {
+                    const n = this.computedPayments;
+                    const pc = parseInt(this.periodCount) || 1;
+                    return n * pc;
                 }
               }'>
             @csrf
@@ -58,12 +69,12 @@
                 </div>
                 <div>
                     <x-input-label for="period_count" :value="'Каждые *'" />
-                    <x-text-input id="period_count" type="number" min="1" name="period_count" :value="old('period_count', $tariff->period_count ?? 1)" required />
+                    <x-text-input id="period_count" type="number" min="1" name="period_count" x-model="periodCount" :value="old('period_count', $tariff->period_count ?? 1)" required />
                     <x-input-error :messages="$errors->get('period_count')" />
                 </div>
                 <div>
                     <x-input-label for="period" :value="'Период *'" />
-                    <select id="period" name="period" required
+                    <select id="period" name="period" required x-model="periodUnit"
                             class="block w-full rounded-xl border-white/10 bg-ink-800/70 text-ink-100 focus:border-neon-cyan focus:ring-neon-cyan">
                         @foreach($periods as $p)
                             <option value="{{ $p->value }}" @selected(old('period', optional($tariff->period)->value ?? 'hour') === $p->value)>{{ $p->label() }}</option>
@@ -136,30 +147,39 @@
                     </span>
                 </label>
 
-                <div x-show="isBuyout" x-collapse class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                    <div>
-                        <x-input-label for="buyout_price" :value="'Выкупная стоимость авто (₽) *'" />
-                        <x-text-input id="buyout_price" type="number" step="0.01" min="0.01" name="buyout_price"
-                                      x-model="buyoutPrice"
-                                      :value="old('buyout_price', $tariff->buyout_price)"
-                                      placeholder="например 90000.00" />
-                        <x-input-error :messages="$errors->get('buyout_price')" />
-                    </div>
-                    <div>
-                        <x-input-label for="buyout_days" :value="'Срок выкупа (дней / периодов) *'" />
-                        <x-text-input id="buyout_days" type="number" min="1" name="buyout_days"
-                                      x-model="buyoutDays"
-                                      :value="old('buyout_days', $tariff->buyout_days)"
-                                      placeholder="например 90" />
-                        <x-input-error :messages="$errors->get('buyout_days')" />
-                    </div>
+                <div x-show="isBuyout" x-collapse class="mt-4">
+                    <x-input-label for="buyout_price" :value="'Выкупная стоимость авто (₽) *'" />
+                    <x-text-input id="buyout_price" type="number" step="0.01" min="0.01" name="buyout_price"
+                                  x-model="buyoutPrice"
+                                  :value="old('buyout_price', $tariff->buyout_price)"
+                                  placeholder="например 90000.00" />
+                    <x-input-error :messages="$errors->get('buyout_price')" />
                 </div>
 
-                <div x-show="isBuyout" x-collapse class="mt-3 text-xs text-ink-300 px-1">
-                    <span x-show="parseFloat(amount) > 0 && parseInt(buyoutDays) > 0">
-                        При сумме <span class="font-mono text-neon-cyan" x-text="amount"></span> ₽ за <span x-text="buyoutDays"></span> платежей это ровно <span class="font-mono text-neon-lime" x-text="projectedTotal"></span> ₽.
-                        Сравните с выкупной стоимостью <span class="font-mono text-neon-violet" x-text="buyoutPrice || '0'"></span> ₽ — если значения совпадают, выкуп закроется ровно за указанный срок.
-                    </span>
+                <div x-show="isBuyout" x-collapse class="mt-3 rounded-xl border border-white/8 bg-ink-900/40 px-4 py-3">
+                    <template x-if="computedPayments > 0">
+                        <div class="text-sm text-ink-100">
+                            <span class="text-ink-300">При сумме списания</span>
+                            <span class="font-mono text-neon-cyan" x-text="amount"></span>
+                            <span class="text-ink-300"> ₽ каждые </span>
+                            <span class="font-mono" x-text="periodCount"></span>
+                            <span x-text="periodLabel"></span>
+                            <span class="text-ink-300"> и выкупной стоимости </span>
+                            <span class="font-mono text-neon-violet" x-text="buyoutPrice"></span>
+                            <span class="text-ink-300"> ₽:</span>
+                            <div class="mt-1">
+                                Авто будет выкуплено за
+                                <span class="font-mono text-neon-lime font-bold" x-text="computedPayments"></span>
+                                списаний — это
+                                <span class="font-mono text-neon-lime" x-text="estimatedDurationLabel"></span>
+                                <span x-text="periodLabel"></span>
+                                с момента старта аренды.
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="computedPayments === 0">
+                        <div class="text-xs text-ink-300">Введите сумму списания и выкупную стоимость — посчитаю количество платежей автоматически.</div>
+                    </template>
                 </div>
             </fieldset>
 

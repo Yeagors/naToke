@@ -29,7 +29,8 @@ class StoreTariffRequest extends FormRequest
 
             'is_buyout' => ['nullable', 'boolean'],
             'buyout_price' => ['nullable', 'required_if:is_buyout,1,true', 'numeric', 'min:0.01', 'max:99999999.99'],
-            'buyout_days' => ['nullable', 'required_if:is_buyout,1,true', 'integer', 'min:1', 'max:36500'],
+            // buyout_days is auto-computed in prepareForValidation, not user-input
+            'buyout_days' => ['nullable', 'integer', 'min:1', 'max:1000000'],
         ];
     }
 
@@ -52,9 +53,17 @@ class StoreTariffRequest extends FormRequest
             'is_active' => (bool) $this->input('is_active', false),
             'is_buyout' => (bool) $this->input('is_buyout', false),
         ]);
-        // If buyout is off, blank out buyout fields so they don't get accidentally saved
         if (! $this->boolean('is_buyout')) {
+            // Buyout off → blank out related fields so they don't get saved
             $this->merge(['buyout_price' => null, 'buyout_days' => null]);
+        } else {
+            // Buyout on → derive buyout_days from amount + price (rounded up).
+            // Admin no longer enters days manually.
+            $amount = (float) $this->input('amount', 0);
+            $price = (float) $this->input('buyout_price', 0);
+            if ($amount > 0 && $price > 0) {
+                $this->merge(['buyout_days' => (int) ceil($price / $amount)]);
+            }
         }
     }
 
