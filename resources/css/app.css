@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+/* Google Fonts removed — they cost 500-2000ms on mobile.
+   Tailwind config falls back to the system font stack (Roboto on Android,
+   SF Pro on iOS, Segoe on Windows). Looks crisp everywhere. */
 
 @tailwind base;
 @tailwind components;
@@ -320,6 +322,48 @@
 
     .text-stroke-cyan {
         -webkit-text-stroke: 1px theme('colors.neon.cyan');
+    }
+}
+
+/* ---------- Mobile-only perf overrides ----------
+   backdrop-filter blur is GPU-hungry, and the animated orbs cause constant
+   repaints. On phones/tablets we trade a tiny bit of visual fidelity for
+   smooth scrolling and a far faster first paint. */
+@media (max-width: 1023.98px) {
+    .glass,
+    .glass-strong {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(16, 18, 31, 0.92) !important;
+    }
+    .animate-pulse-glow,
+    .animate-gradient-slow {
+        animation: none !important;
+    }
+    /* The decorative orbs in app/guest layouts are pure decoration — hide them on small screens to skip painting huge blurred shapes. */
+    nav + main .pointer-events-none > div[class*="rounded-full"],
+    body > div > div[aria-hidden="true"] > div[class*="rounded-full"] {
+        display: none !important;
+    }
+    /* Tone down body radial gradients */
+    body {
+        background-image: none !important;
+        background-color: theme('colors.ink.950') !important;
+    }
+    /* Drop ring-glow shadows that re-render on every scroll */
+    .shadow-glow-cyan, .shadow-glow-violet, .shadow-glow-pink, .shadow-glow-lime, .shadow-glow-red {
+        box-shadow: none !important;
+    }
+    /* Replace card-lift transition with a cheaper one */
+    .card-lift {
+        transition: none !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
     }
 }
 

@@ -12,9 +12,21 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Inter', 'Figtree', ...defaultTheme.fontFamily.sans],
-                display: ['"Space Grotesk"', 'Inter', ...defaultTheme.fontFamily.sans],
-                mono: ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
+                // System fonts only — instant first paint, no Google Fonts request.
+                // The site still looks great: Roboto on Android, SF Pro on iOS, Segoe on Windows.
+                sans: [
+                    '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto',
+                    'Inter', '"Helvetica Neue"', 'Arial', 'sans-serif',
+                    '"Apple Color Emoji"', '"Segoe UI Emoji"',
+                ],
+                display: [
+                    '"Space Grotesk"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto',
+                    'Inter', 'sans-serif',
+                ],
+                mono: [
+                    '"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular',
+                    'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace',
+                ],
             },
             colors: {
                 // Dark surface palette
