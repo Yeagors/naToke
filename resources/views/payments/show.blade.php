@@ -84,16 +84,19 @@
                             Имитировать оплату
                         </a>
                     @else
-                        <p class="text-center text-xs text-ink-300 mb-3 max-w-md">
-                            Отсканируй QR-код в приложении вашего банка и подтверди платёж.
-                            Зачисление произойдёт автоматически, эта страница обновится сама.
-                        </p>
                         @if($payment->qr_url)
-                            <a href="{{ $payment->qr_url }}" target="_blank" rel="noopener"
-                               class="btn btn-ghost w-full justify-center">
-                                Открыть в банковском приложении
+                            {{-- Primary CTA on mobile: tap to open in installed bank app via system Intent --}}
+                            <a href="{{ $payment->qr_url }}" rel="external noopener"
+                               class="btn btn-primary w-full justify-center mb-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                Оплатить — открыть в банке
                             </a>
                         @endif
+                        <p class="text-center text-xs text-ink-300 max-w-md leading-relaxed">
+                            На телефоне — жми кнопку выше, откроется ваше банковское приложение.<br>
+                            С другого устройства — отсканируйте QR из приложения банка.
+                            Зачисление произойдёт автоматически, эта страница обновится сама.
+                        </p>
                     @endif
                 </div>
             @endif
