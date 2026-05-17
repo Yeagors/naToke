@@ -240,8 +240,8 @@
             </section>
         @endif
 
-        {{-- ---- Useful metrics block (advice) ---- --}}
-        <section class="glass rounded-2xl p-6 mb-12">
+        {{-- ---- Aux metrics ---- --}}
+        <section class="glass rounded-2xl p-6 mb-6">
             <h2 class="text-lg font-display font-bold mb-3">📊 Дополнительные метрики</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                 <div class="p-3 rounded-xl bg-white/5 border border-white/5">
@@ -268,21 +268,280 @@
                     <div class="text-xs text-ink-300 mt-1">только водители (без админов)</div>
                 </div>
             </div>
+        </section>
 
-            <details class="mt-4 group">
-                <summary class="cursor-pointer text-sm text-neon-cyan flex items-center gap-2 select-none">
-                    <svg class="w-3 h-3 transition group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                    Что я могу добавить (если интересно)
-                </summary>
-                <div class="mt-3 space-y-2 text-xs text-ink-200">
-                    <div>• <b>Когорты водителей</b> — кто пришёл в каком месяце, сколько в среднем потратил, retention</div>
-                    <div>• <b>CAC / LTV</b> — стоимость привлечения водителя vs его жизненный доход для парка</div>
-                    <div>• <b>Прогноз окупаемости</b> — линейный тренд от текущего темпа: когда конкретное авто закроет покупку</div>
-                    <div>• <b>Карта ремонтов</b> — частота expense-операций по авто, средний межремонтный интервал</div>
-                    <div>• <b>Сезонность</b> — DoW/час, когда выручка максимальна (для планирования зарядки/ТО в простой)</div>
-                    <div>• <b>Финансовый отчёт за месяц</b> — экспорт PDF/XLSX с детализацией</div>
+        {{-- ---- Payback forecast ---- --}}
+        @php $forecastCars = $perCar->filter(fn ($r) => $r['purchase'] !== null && $r['purchase'] > 0); @endphp
+        <section class="glass rounded-2xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                    <h2 class="text-lg font-display font-bold">Прогноз окупаемости</h2>
+                    <p class="text-xs text-ink-300">Линейный тренд по среднедневному net за последние 30 дней. Если темп упадёт до нуля — прогноз заморозится.</p>
                 </div>
-            </details>
+            </div>
+            @if($forecastCars->isEmpty())
+                <div class="text-sm text-ink-300 py-6 text-center border border-dashed border-white/10 rounded-xl">
+                    Чтобы появился прогноз — укажи <span class="text-ink-100 font-medium">стоимость закупа</span> хотя бы у одного авто (профиль авто → блок «Закуп»).
+                </div>
+            @else
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($forecastCars as $row)
+                        @php $c = $row['car']; @endphp
+                        <a href="{{ route('cars.show', $c) }}" class="rounded-xl border border-white/10 bg-white/5 p-4 block hover:border-neon-cyan/40 transition">
+                            <div class="flex items-center gap-2 mb-3">
+                                @if($c->photo)
+                                    <img src="{{ $c->photo_url }}" class="w-10 h-7 rounded-md object-cover ring-1 ring-white/10" alt="">
+                                @else
+                                    <div class="w-10 h-7 rounded-md bg-white/5 ring-1 ring-white/10"></div>
+                                @endif
+                                <div class="min-w-0 flex-1">
+                                    <div class="font-medium truncate">{{ $c->display_name }}</div>
+                                    <div class="text-xs text-ink-300 font-mono">{{ $c->license_plate }}</div>
+                                </div>
+                            </div>
+
+                            @if($row['forecast_note'] === 'paid')
+                                <div class="flex items-center gap-2 text-neon-lime">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span class="font-semibold">Окупилось</span>
+                                </div>
+                                <div class="text-xs text-ink-300 mt-1">Net = {{ number_format($row['net'], 0, '.', ' ') }} ₽, в плюсе на {{ number_format($row['net'] - $row['purchase'], 0, '.', ' ') }} ₽</div>
+                            @elseif($row['forecast_note'] === 'projected')
+                                <div class="text-3xl font-display font-bold text-neon-cyan">
+                                    {{ $row['forecast_eta_days'] }} <span class="text-base text-ink-300">дн.</span>
+                                </div>
+                                <div class="text-xs text-ink-300 mt-1">
+                                    окупится к <span class="text-ink-100 font-mono">{{ $row['forecast_eta_date']->translatedFormat('d MMM Y') }}</span>
+                                </div>
+                                <div class="mt-2 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-neon-cyan to-neon-violet" style="width: {{ $row['payback_pct'] }}%"></div>
+                                </div>
+                                <div class="text-[10px] text-ink-300 mt-1">
+                                    {{ $row['payback_pct'] }}% · темп +{{ number_format($row['recent_daily_net'], 0, '.', ' ') }} ₽/день
+                                </div>
+                            @elseif($row['forecast_note'] === 'stalled')
+                                <div class="text-neon-amber font-semibold flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    Темп нулевой
+                                </div>
+                                <div class="text-xs text-ink-300 mt-1">За 30 дней расходы ≥ доход. Нужно либо в аренду, либо урезать расходы.</div>
+                            @endif
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+
+        {{-- ---- Cohorts: signup month + retention ---- --}}
+        @if(! empty($cohorts['cohorts']))
+            <section class="glass rounded-2xl p-6 mb-6">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="text-lg font-display font-bold">Когорты водителей</h2>
+                        <p class="text-xs text-ink-300">Группировка по месяцу регистрации. Retention — % водителей когорты с активностью (любая транзакция) в этом месяце-после-регистрации.</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto -mx-6 px-6 mb-6">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Когорта</th>
+                                <th class="text-right">Размер</th>
+                                <th class="text-right whitespace-nowrap">Пополнено</th>
+                                <th class="text-right whitespace-nowrap">Списано</th>
+                                <th class="text-right whitespace-nowrap">ARPU</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($cohorts['cohorts'] as $c)
+                                <tr>
+                                    <td><span class="font-medium">{{ $c['label'] }}</span> <span class="text-xs text-ink-300 font-mono ml-1">{{ $c['cohort'] }}</span></td>
+                                    <td class="text-right font-mono">{{ $c['size'] }}</td>
+                                    <td class="text-right font-mono text-neon-lime">+{{ number_format($c['topup'], 0, '.', ' ') }} ₽</td>
+                                    <td class="text-right font-mono text-neon-red">−{{ number_format($c['spend'], 0, '.', ' ') }} ₽</td>
+                                    <td class="text-right font-mono text-neon-cyan">{{ number_format($c['arpu'], 0, '.', ' ') }} ₽</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="text-sm font-display font-semibold mb-3 uppercase tracking-wider text-ink-200">Retention</h3>
+                <div class="overflow-x-auto -mx-6 px-6">
+                    <table class="text-xs border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="text-left px-3 py-2 font-medium text-ink-300">Когорта</th>
+                                <th class="text-right px-3 py-2 font-medium text-ink-300">Размер</th>
+                                @for($m = 0; $m <= $cohorts['maxMonths']; $m++)
+                                    <th class="text-center px-2 py-2 font-medium text-ink-300 min-w-[44px]">M+{{ $m }}</th>
+                                @endfor
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($cohorts['retention'] as $r)
+                                <tr>
+                                    <td class="px-3 py-1.5 whitespace-nowrap">{{ $r['label'] }}</td>
+                                    <td class="text-right px-3 py-1.5 font-mono">{{ $r['size'] }}</td>
+                                    @for($m = 0; $m <= $cohorts['maxMonths']; $m++)
+                                        @php
+                                            $cell = $r['cells'][$m] ?? null;
+                                        @endphp
+                                        @if($cell)
+                                            @php
+                                                $pct = $cell['pct'];
+                                                $opacity = max(0.10, $pct / 100);
+                                            @endphp
+                                            <td class="text-center px-1 py-1.5">
+                                                <div class="rounded-md py-1.5 px-2 text-[11px] font-mono font-semibold"
+                                                     style="background-color: rgba(0, 229, 255, {{ $opacity }}); color: {{ $pct >= 50 ? '#0a0b16' : '#e8e8f5' }};"
+                                                     title="{{ $cell['count'] }} из {{ $r['size'] }}">
+                                                    {{ $pct }}%
+                                                </div>
+                                            </td>
+                                        @else
+                                            <td class="text-center px-1 py-1.5 text-ink-400">·</td>
+                                        @endif
+                                    @endfor
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
+
+        {{-- ---- Repair map ---- --}}
+        <section class="glass rounded-2xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                    <h2 class="text-lg font-display font-bold">Карта ремонтов</h2>
+                    <p class="text-xs text-ink-300">Все car_transactions со знаком расхода — сгруппированы по авто. MTBR = средний интервал между ремонтами.</p>
+                </div>
+            </div>
+            @if(empty($repairs))
+                <div class="text-sm text-ink-300 py-6 text-center border border-dashed border-white/10 rounded-xl">
+                    По авто пока не было ни одного расхода. Добавляй их через профиль авто → «Транзакция авто» → «Расход».
+                </div>
+            @else
+                <div class="overflow-x-auto -mx-6 px-6">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Авто</th>
+                                <th class="text-right">Кол-во ремонтов</th>
+                                <th class="text-right whitespace-nowrap">Всего потрачено</th>
+                                <th class="text-right whitespace-nowrap">Ср. чек</th>
+                                <th class="text-right whitespace-nowrap">MTBR</th>
+                                <th class="whitespace-nowrap">Последний ремонт</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($repairs as $r)
+                                @php $c = $r['car']; @endphp
+                                <tr onclick="location.href='{{ route('cars.show', $c) }}'" class="cursor-pointer group">
+                                    <td>
+                                        <div class="flex items-center gap-3">
+                                            @if($c->photo)
+                                                <img src="{{ $c->photo_url }}" class="w-10 h-7 rounded-md object-cover ring-1 ring-white/10" alt="">
+                                            @else
+                                                <div class="w-10 h-7 rounded-md bg-white/5 ring-1 ring-white/10"></div>
+                                            @endif
+                                            <div>
+                                                <div class="font-medium group-hover:text-neon-cyan transition">{{ $c->display_name }}</div>
+                                                <div class="text-xs text-ink-300 font-mono">{{ $c->license_plate }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-right font-mono">{{ $r['count'] }}</td>
+                                    <td class="text-right font-mono font-semibold text-neon-red">−{{ number_format($r['total'], 0, '.', ' ') }} ₽</td>
+                                    <td class="text-right font-mono text-ink-200">{{ number_format($r['avg'], 0, '.', ' ') }} ₽</td>
+                                    <td class="text-right font-mono">{{ $r['mtbr_days'] !== null ? $r['mtbr_days'].' дн.' : '—' }}</td>
+                                    <td class="text-xs text-ink-300 font-mono whitespace-nowrap">{{ $r['last_at']->format('d.m.Y') }} <span class="text-ink-400">({{ $r['last_at']->diffForHumans() }})</span></td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </section>
+
+        {{-- ---- Seasonality heatmap ---- --}}
+        @if($seasonality['max'] > 0)
+            <section class="glass rounded-2xl p-6 mb-6">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="text-lg font-display font-bold">Сезонность · день × час</h2>
+                        <p class="text-xs text-ink-300">Сумма выручки парка по час-времени и дню недели за последние {{ $seasonality['window_days'] }} дней. Чем темнее cyan — тем больше денег прошло.</p>
+                    </div>
+                    <div class="text-xs text-ink-300">{{ $seasonality['from'] }} → {{ $seasonality['to'] }}</div>
+                </div>
+
+                <div class="overflow-x-auto -mx-2 px-2">
+                    <div class="grid gap-0.5" style="grid-template-columns: 40px repeat(24, minmax(24px, 1fr)); min-width: 700px;">
+                        {{-- Header: hours --}}
+                        <div></div>
+                        @for($h = 0; $h < 24; $h++)
+                            <div class="text-[10px] text-ink-300 text-center font-mono">{{ str_pad($h, 2, '0', STR_PAD_LEFT) }}</div>
+                        @endfor
+
+                        @foreach($seasonality['days'] as $d => $dayLabel)
+                            <div class="text-[11px] text-ink-300 font-semibold flex items-center">{{ $dayLabel }}</div>
+                            @for($h = 0; $h < 24; $h++)
+                                @php
+                                    $cell = $seasonality['matrix'][$d][$h];
+                                    $val = (float) $cell['total'];
+                                    $opacity = $seasonality['max'] > 0 ? max(0.03, $val / $seasonality['max']) : 0.03;
+                                @endphp
+                                <div class="aspect-square rounded-sm transition hover:ring-1 hover:ring-neon-cyan"
+                                     style="background-color: rgba(0, 229, 255, {{ $opacity }});"
+                                     title="{{ $dayLabel }} {{ str_pad($h, 2, '0', STR_PAD_LEFT) }}:00 · {{ number_format($val, 0, '.', ' ') }} ₽ ({{ $cell['cnt'] }} тр.)"></div>
+                            @endfor
+                        @endforeach
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center gap-2 text-xs text-ink-300">
+                    <span>меньше</span>
+                    <div class="flex gap-0.5">
+                        @foreach([0.05, 0.2, 0.4, 0.6, 0.8, 1.0] as $op)
+                            <div class="w-5 h-3 rounded-sm" style="background: rgba(0, 229, 255, {{ $op }});"></div>
+                        @endforeach
+                    </div>
+                    <span>больше</span>
+                    <span class="ml-auto">Пик: <span class="font-mono text-neon-cyan">{{ number_format($seasonality['max'], 0, '.', ' ') }} ₽</span></span>
+                </div>
+            </section>
+        @endif
+
+        {{-- ---- Monthly report download ---- --}}
+        <section class="glass rounded-2xl p-6 mb-12">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                    <h2 class="text-lg font-display font-bold">Финансовый отчёт за месяц</h2>
+                    <p class="text-xs text-ink-300">XLSX с 5 листами: Сводка · По авто · По водителям · Аренды · Транзакции. Откроется в Excel, Numbers, Google Sheets.</p>
+                </div>
+            </div>
+            <form method="GET" action="{{ route('reports.monthly') }}" class="flex flex-wrap items-end gap-3">
+                <div class="flex-1 min-w-[240px] max-w-md">
+                    <x-input-label :value="'Период'" />
+                    <x-select
+                        name="month"
+                        :value="$availableMonths[0] ?? now()->format('Y-m')"
+                        required
+                        :options="collect($availableMonths)->map(function ($m) {
+                            try {
+                                return ['value' => $m, 'label' => \Carbon\Carbon::createFromFormat('Y-m', $m)->translatedFormat('LLLL Y')];
+                            } catch (\Throwable $e) {
+                                return ['value' => $m, 'label' => $m];
+                            }
+                        })->all()" />
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Скачать XLSX
+                </button>
+            </form>
         </section>
     </div>
 

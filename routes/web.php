@@ -6,6 +6,7 @@ use App\Http\Controllers\CarTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TariffController;
@@ -73,6 +74,9 @@ Route::middleware('auth')->group(function () {
         // Stats / dashboard analytics
         Route::get('/stats', [StatsController::class, 'index'])->name('stats.index');
         Route::get('/stats/unit-economics', [StatsController::class, 'unitEconomics'])->name('stats.unit');
+
+        // Monthly financial report (XLSX)
+        Route::get('/reports/monthly.xlsx', [ReportController::class, 'monthly'])->name('reports.monthly');
     });
 
     // Rental show — accessible by admin OR the renter (ownership check inside controller)
