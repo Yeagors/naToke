@@ -15,6 +15,8 @@ class Car extends Model
         'model',
         'year',
         'balance',
+        'purchase_price',
+        'purchase_date',
         'comment',
         'battery_capacity',
         'battery_number',
@@ -27,6 +29,8 @@ class Car extends Model
         return [
             'year' => 'integer',
             'balance' => 'decimal:2',
+            'purchase_price' => 'decimal:2',
+            'purchase_date' => 'date',
             'battery_capacity' => 'integer',
         ];
     }

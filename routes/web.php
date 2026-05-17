@@ -72,6 +72,7 @@ Route::middleware('auth')->group(function () {
 
         // Stats / dashboard analytics
         Route::get('/stats', [StatsController::class, 'index'])->name('stats.index');
+        Route::get('/stats/unit-economics', [StatsController::class, 'unitEconomics'])->name('stats.unit');
     });
 
     // Rental show — accessible by admin OR the renter (ownership check inside controller)

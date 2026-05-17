@@ -46,6 +46,23 @@
             </div>
 
             <fieldset class="rounded-xl border border-white/8 px-4 py-3">
+                <legend class="px-2 text-xs uppercase tracking-[0.18em] text-ink-300">Закуп (для юнит-экономики)</legend>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    <div>
+                        <x-input-label for="purchase_price" :value="'Стоимость закупа (₽)'" />
+                        <x-text-input id="purchase_price" type="number" step="0.01" min="0" name="purchase_price" :value="old('purchase_price')" placeholder="например 60000.00" />
+                        <p class="text-xs text-ink-300 mt-1">Используется в расчёте ROI / окупаемости.</p>
+                        <x-input-error :messages="$errors->get('purchase_price')" />
+                    </div>
+                    <div>
+                        <x-input-label for="purchase_date" :value="'Дата покупки'" />
+                        <x-text-input id="purchase_date" type="date" name="purchase_date" :value="old('purchase_date')" :max="date('Y-m-d')" />
+                        <x-input-error :messages="$errors->get('purchase_date')" />
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="rounded-xl border border-white/8 px-4 py-3">
                 <legend class="px-2 text-xs uppercase tracking-[0.18em] text-ink-300">Аккумулятор</legend>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     <div>
