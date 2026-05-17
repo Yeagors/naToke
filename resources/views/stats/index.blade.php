@@ -7,7 +7,7 @@
                 <div class="text-xs uppercase tracking-[0.32em] text-ink-300">Раздел</div>
                 <h1 class="text-3xl font-display font-bold tracking-tight">Статистика</h1>
                 <p class="text-ink-300 text-sm mt-1">
-                    Период: <span class="text-neon-cyan font-semibold">{{ $monthStart->translatedFormat('F Y') }}</span>
+                    Период: <span class="text-neon-cyan font-semibold">{{ \Illuminate\Support\Str::ucfirst($monthStart->locale('ru')->isoFormat('MMMM YYYY')) }}</span>
                     · сегодня {{ $now->format('d.m.Y H:i') }} MSK
                 </p>
             </div>

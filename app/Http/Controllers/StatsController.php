@@ -273,7 +273,7 @@ class StatsController extends Controller
 
             $cohortsList[] = [
                 'cohort' => $row->cohort,
-                'label' => $cohortMonth->translatedFormat('LLLL Y'),
+                'label' => \Illuminate\Support\Str::ucfirst($cohortMonth->locale('ru')->isoFormat('MMMM YYYY')),
                 'size' => (int) $row->size,
                 'spend' => round($spend, 2),
                 'topup' => round($topup, 2),
@@ -297,7 +297,7 @@ class StatsController extends Controller
             }
             $retention[] = [
                 'cohort' => $row->cohort,
-                'label' => $cohortMonth->translatedFormat('LLLL Y'),
+                'label' => \Illuminate\Support\Str::ucfirst($cohortMonth->locale('ru')->isoFormat('MMMM YYYY')),
                 'size' => (int) $row->size,
                 'cells' => $cells,
             ];

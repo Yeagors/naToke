@@ -40,7 +40,7 @@ class ReportController extends Controller
         $spreadsheet = new Spreadsheet();
         $spreadsheet->getProperties()
             ->setCreator('naToke CRM')
-            ->setTitle('Финансовый отчёт '.$start->translatedFormat('LLLL Y'));
+            ->setTitle('Финансовый отчёт '.\Illuminate\Support\Str::ucfirst($start->locale('ru')->isoFormat('MMMM YYYY')));
 
         $this->renderSummary($spreadsheet, $start, $end);
         $this->renderCarsSheet($spreadsheet, $start, $end);
@@ -76,7 +76,7 @@ class ReportController extends Controller
         ]);
 
         $sheet->setCellValue('A2', 'Период');
-        $sheet->setCellValue('B2', $start->translatedFormat('LLLL Y')." ({$start->format('d.m.Y')} – {$end->format('d.m.Y')})");
+        $sheet->setCellValue('B2', \Illuminate\Support\Str::ucfirst($start->locale('ru')->isoFormat('MMMM YYYY'))." ({$start->format('d.m.Y')} – {$end->format('d.m.Y')})");
 
         $sheet->setCellValue('A3', 'Сгенерирован');
         $sheet->setCellValue('B3', now()->format('d.m.Y H:i').' MSK');

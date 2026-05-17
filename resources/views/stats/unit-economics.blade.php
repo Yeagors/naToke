@@ -311,7 +311,7 @@
                                     {{ $row['forecast_eta_days'] }} <span class="text-base text-ink-300">дн.</span>
                                 </div>
                                 <div class="text-xs text-ink-300 mt-1">
-                                    окупится к <span class="text-ink-100 font-mono">{{ $row['forecast_eta_date']->translatedFormat('d MMM Y') }}</span>
+                                    окупится к <span class="text-ink-100 font-mono">{{ $row['forecast_eta_date']->locale('ru')->isoFormat('D MMMM YYYY') }}</span>
                                 </div>
                                 <div class="mt-2 h-1.5 bg-white/5 rounded-full overflow-hidden">
                                     <div class="h-full bg-gradient-to-r from-neon-cyan to-neon-violet" style="width: {{ $row['payback_pct'] }}%"></div>
@@ -531,7 +531,7 @@
                         required
                         :options="collect($availableMonths)->map(function ($m) {
                             try {
-                                return ['value' => $m, 'label' => \Carbon\Carbon::createFromFormat('Y-m', $m)->translatedFormat('LLLL Y')];
+                                return ['value' => $m, 'label' => \Illuminate\Support\Str::ucfirst(\Carbon\Carbon::createFromFormat('Y-m', $m)->locale('ru')->isoFormat('MMMM YYYY'))];
                             } catch (\Throwable $e) {
                                 return ['value' => $m, 'label' => $m];
                             }

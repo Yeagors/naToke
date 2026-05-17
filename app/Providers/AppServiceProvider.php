@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        // Force Russian locale on Carbon (so isoFormat/translatedFormat/diffForHumans
+        // produce Russian strings everywhere — web requests, queue jobs, scheduled commands).
+        \Carbon\Carbon::setLocale(config('app.locale', 'ru'));
     }
 }
