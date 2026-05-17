@@ -16,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
         ]);
+
+        // T-Bank acquiring posts notifications without a CSRF token — verification
+        // happens via the signed Token field on the payload (see TBankPaymentGateway).
+        $middleware->validateCsrfTokens(except: [
+            'payments/webhook/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

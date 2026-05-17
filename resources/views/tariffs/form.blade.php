@@ -29,6 +29,7 @@
         @endif
 
         <form method="POST" action="{{ $action }}" class="glass rounded-2xl p-6 space-y-5"
+              @select-changed="if ($event.detail.name === 'period') periodUnit = $event.detail.value"
               x-data='{
                 extras: {{ $extrasInitial }},
                 isBuyout: {{ old('is_buyout', $tariff->is_buyout ?? false) ? 'true' : 'false' }},
@@ -74,12 +75,11 @@
                 </div>
                 <div>
                     <x-input-label for="period" :value="'Период *'" />
-                    <select id="period" name="period" required x-model="periodUnit"
-                            class="block w-full rounded-xl border-white/10 bg-ink-800/70 text-ink-100 focus:border-neon-cyan focus:ring-neon-cyan">
-                        @foreach($periods as $p)
-                            <option value="{{ $p->value }}" @selected(old('period', optional($tariff->period)->value ?? 'hour') === $p->value)>{{ $p->label() }}</option>
-                        @endforeach
-                    </select>
+                    <x-select
+                        name="period"
+                        :value="old('period', optional($tariff->period)->value ?? 'hour')"
+                        required
+                        :options="collect($periods)->map(fn($p) => ['value' => $p->value, 'label' => ucfirst($p->label())])->all()" />
                     <x-input-error :messages="$errors->get('period')" />
                 </div>
             </div>

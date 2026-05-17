@@ -4,6 +4,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\CarController;
 use App\Http\Controllers\CarTransactionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\StatsController;
@@ -24,6 +25,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+
+    // Top-up by QR (driver + admin both can request for themselves)
+    Route::post('/payments', [PaymentController::class, 'create'])->name('payments.create');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::get('/payments/{payment}/status', [PaymentController::class, 'status'])->name('payments.status');
+    // Fake-gateway confirmation (URL embedded in QR for simulator)
+    Route::match(['get', 'post'], '/payments/{payment}/confirm-fake', [PaymentController::class, 'confirmFake'])
+        ->name('payments.fake.confirm');
 
     Route::middleware('admin')->group(function () {
         // Users
@@ -68,5 +77,10 @@ Route::middleware('auth')->group(function () {
     // Rental show — accessible by admin OR the renter (ownership check inside controller)
     Route::get('/rentals/{rental}', [RentalController::class, 'show'])->name('rentals.show');
 });
+
+// Public payment webhook from T-Bank. CSRF exempt is configured in bootstrap/app.php
+// (validateCsrfTokens except 'payments/webhook/*'). Provider's signed Token is verified inside the gateway.
+Route::post('/payments/webhook/tbank', [PaymentController::class, 'webhookTBank'])
+    ->name('payments.webhook.tbank');
 
 require __DIR__.'/auth.php';

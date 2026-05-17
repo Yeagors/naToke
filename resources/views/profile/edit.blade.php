@@ -78,13 +78,21 @@
                     <div class="mt-2 text-4xl font-display font-bold text-neon-lime drop-shadow-[0_0_20px_rgba(194,255,69,0.35)]">
                         {{ number_format((float) $user->balance, 2, '.', ' ') }} <span class="text-neon-lime/70 text-2xl">₽</span>
                     </div>
+
+                    {{-- Top-up by SBP QR (driver + admin both) --}}
+                    <button x-data @click="$dispatch('open-modal', 'topup-qr-modal')" class="btn btn-primary w-full mt-4 justify-center">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm12 2h2v2h-2zm-2 2h2v2h-2zm2 0h2v2h-2zm-2-4h2v2h-2zm4-2h2v2h-2zm0 4h2v2h-2z"/></svg>
+                        Пополнить по QR (СБП)
+                    </button>
+
+                    {{-- Admin-only: manual debit/credit (no money movement, ledger adjustment) --}}
                     @if($user->isAdmin())
-                        <button x-data @click="$dispatch('open-modal', 'balance-modal')" class="btn btn-primary w-full mt-4 justify-center">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                            Пополнить / списать
+                        <button x-data @click="$dispatch('open-modal', 'balance-modal')" class="btn btn-ghost w-full mt-2 justify-center">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                            Ручная транзакция
                         </button>
                     @else
-                        <p class="text-xs text-ink-300 mt-3">Изменение баланса доступно только администратору.</p>
+                        <p class="text-xs text-ink-300 mt-3">Списание баланса проводит администратор.</p>
                     @endif
                 </div>
 
@@ -132,6 +140,43 @@
             </div>
         </div>
     </div>
+
+    {{-- Top-up by SBP QR modal (available to everyone) --}}
+    <x-modal name="topup-qr-modal" maxWidth="md" :show="$errors->hasAny(['amount']) && session('open_topup')">
+        <form method="POST" action="{{ route('payments.create') }}">
+            @csrf
+            <div class="p-6">
+                <h3 class="text-lg font-display font-bold mb-1">Пополнение баланса · СБП</h3>
+                <p class="text-sm text-ink-300 mb-5">
+                    После подтверждения вы получите QR-код. Отсканируйте его в банковском приложении
+                    или нажмите кнопку «Имитировать оплату» (демо-режим).
+                </p>
+
+                <div class="mb-4">
+                    <x-input-label for="amount" :value="'Сумма (₽) *'" />
+                    <x-text-input id="amount" type="number" step="0.01"
+                                  min="{{ (int) config('payments.min_amount', 50) }}"
+                                  max="{{ (int) config('payments.max_amount', 100000) }}"
+                                  name="amount" :value="old('amount', 1000)" required />
+                    <p class="text-xs text-ink-300 mt-1">
+                        От {{ number_format((float) config('payments.min_amount', 50), 0, '.', ' ') }} ₽
+                        до {{ number_format((float) config('payments.max_amount', 100000), 0, '.', ' ') }} ₽.
+                    </p>
+                    <x-input-error :messages="$errors->get('amount')" />
+                </div>
+
+                <div class="mb-2">
+                    <x-input-label for="comment" :value="'Комментарий'" />
+                    <x-text-input id="comment" type="text" name="comment" :value="old('comment')" maxlength="200" placeholder="опционально" />
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/5">
+                <button type="button" x-on:click="$dispatch('close')" class="btn btn-ghost">Отмена</button>
+                <x-primary-button>Создать QR-код</x-primary-button>
+            </div>
+        </form>
+    </x-modal>
 
     {{-- Balance modal --}}
     @if($user->isAdmin())

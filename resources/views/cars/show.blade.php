@@ -473,19 +473,24 @@
                         <x-input-error :messages="$errors->get('user_id')" />
                     </div>
 
-                    <div x-data='{ tariffId: "{{ old('tariff_id') }}", tariffs: @json($tariffs->keyBy('id')) }'>
+                    <div x-data='{ tariffId: "{{ old('tariff_id') }}", tariffs: @json($tariffs->keyBy('id')) }'
+                         @select-changed="if ($event.detail.name === 'tariff_id') tariffId = $event.detail.value">
                         <x-input-label for="tariff_id" :value="'Тариф *'" />
-                        <select id="tariff_id" name="tariff_id" required x-model="tariffId"
-                                class="block w-full rounded-xl border-white/10 bg-ink-800/70 text-ink-100 focus:border-neon-cyan focus:ring-neon-cyan">
-                            <option value="">— выберите —</option>
-                            @forelse($tariffs as $t)
-                                <option value="{{ $t->id }}" @selected(old('tariff_id') == $t->id)>
-                                    {{ $t->name }} · {{ number_format((float) $t->amount, 2, '.', ' ') }} ₽ / {{ $t->period_count }} {{ $t->period->label() }}@if($t->is_buyout) · РАСКАТ{{ $t->buyout_price ? ' '.number_format((float)$t->buyout_price,0,'.',' ').' ₽ за '.$t->buyout_days.' дн.' : '' }}@elseif((float) $t->deposit_amount > 0) · депозит {{ number_format((float) $t->deposit_amount, 2, '.', ' ') }} ₽@endif
-                                </option>
-                            @empty
-                                <option value="" disabled>Нет активных тарифов</option>
-                            @endforelse
-                        </select>
+                        @php
+                            $tariffOptions = $tariffs->map(function ($t) {
+                                $base = $t->name.' · '.number_format((float) $t->amount, 2, '.', ' ').' ₽ / '.$t->period_count.' '.$t->period->label();
+                                $hint = $t->is_buyout
+                                    ? '⚡ Раскат'.($t->buyout_price ? ' · '.number_format((float)$t->buyout_price,0,'.',' ').' ₽ за '.$t->buyout_days.' периодов' : '')
+                                    : ((float) $t->deposit_amount > 0 ? 'депозит '.number_format((float) $t->deposit_amount, 2, '.', ' ').' ₽' : null);
+                                return ['value' => $t->id, 'label' => $base, 'hint' => $hint];
+                            })->all();
+                        @endphp
+                        <x-select
+                            name="tariff_id"
+                            :value="old('tariff_id')"
+                            required
+                            :options="$tariffOptions"
+                            placeholder="— выберите тариф —" />
                         @if($tariffs->isEmpty())
                             <p class="text-xs text-neon-red mt-1">Нет ни одного активного тарифа. <a href="{{ route('tariffs.create') }}" class="underline">Создать</a>.</p>
                         @endif

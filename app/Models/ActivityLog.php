@@ -48,7 +48,9 @@ class ActivityLog extends Model
             str_starts_with($action, 'tariffs.') => 'tariffs',
             str_starts_with($action, 'cars.') => 'cars',
             str_starts_with($action, 'rentals.'), str_starts_with($action, 'cron.rental') => 'rentals',
-            str_starts_with($action, 'transactions.'), str_starts_with($action, 'car_transactions.') => 'money',
+            str_starts_with($action, 'transactions.'),
+            str_starts_with($action, 'car_transactions.'),
+            str_starts_with($action, 'payments.') => 'money',
             default => 'other',
         };
     }
@@ -81,6 +83,9 @@ class ActivityLog extends Model
             'rentals.closed' => 'Аренда закрыта',
             'cron.rental_charge' => 'Списание по аренде (крон)',
             'cron.rental_buyout_completed' => 'Авто выкуплено (крон)',
+            'payments.created' => 'Создан платёж (QR)',
+            'payments.confirmed' => 'Платёж зачислен',
+            'payments.failed' => 'Платёж отклонён',
             default => $this->action,
         };
     }
@@ -117,6 +122,7 @@ class ActivityLog extends Model
             Car::class => route('cars.show', $this->subject_id),
             Tariff::class => route('tariffs.show', $this->subject_id),
             Rental::class => route('rentals.show', $this->subject_id),
+            PaymentRequest::class => route('payments.show', $this->subject_id),
             default => null,
         };
     }

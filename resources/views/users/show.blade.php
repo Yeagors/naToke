@@ -131,14 +131,11 @@
                         </div>
                         <div>
                             <x-input-label for="role" :value="'Уровень доступов *'" />
-                            <select id="role" name="role" required
-                                    class="block w-full rounded-xl border-white/10 bg-ink-800/70 text-ink-100 focus:border-neon-cyan focus:ring-neon-cyan">
-                                @foreach($roles as $r)
-                                    <option value="{{ $r->value }}" @selected(old('role', $user->role->value) === $r->value)>
-                                        {{ $r->label() }} ({{ $r->value }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            <x-select
+                                name="role"
+                                :value="old('role', $user->role->value)"
+                                required
+                                :options="collect($roles)->map(fn($r) => ['value' => $r->value, 'label' => $r->label(), 'hint' => $r->value])->all()" />
                             <x-input-error :messages="$errors->get('role')" />
                         </div>
                     </div>
