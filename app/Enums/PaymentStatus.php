@@ -8,6 +8,7 @@ enum PaymentStatus: string
     case Confirmed = 'confirmed';
     case Failed = 'failed';
     case Cancelled = 'cancelled';
+    case Refunded = 'refunded';
 
     public function label(): string
     {
@@ -16,12 +17,13 @@ enum PaymentStatus: string
             self::Confirmed => 'Зачислено',
             self::Failed => 'Ошибка',
             self::Cancelled => 'Отменён',
+            self::Refunded => 'Возвращён',
         };
     }
 
     public function isTerminal(): bool
     {
-        return in_array($this, [self::Confirmed, self::Failed, self::Cancelled], true);
+        return in_array($this, [self::Confirmed, self::Failed, self::Cancelled, self::Refunded], true);
     }
 
     public function badgeClass(): string
@@ -29,7 +31,7 @@ enum PaymentStatus: string
         return match ($this) {
             self::Pending => 'badge-driver',
             self::Confirmed => 'badge-deposit',
-            self::Failed, self::Cancelled => 'badge-withdrawal',
+            self::Failed, self::Cancelled, self::Refunded => 'badge-withdrawal',
         };
     }
 }

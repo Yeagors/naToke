@@ -15,7 +15,7 @@ use RuntimeException;
  *
  * Flow:
  *   1. POST {api_url}/Init       → returns PaymentId
- *   2. POST {api_url}/QR         → returns Data (QR-string for SBP) + Url (deeplink)
+ *   2. POST {api_url}/GetQr      → returns Data (SBP payload string, also usable as deeplink)
  *   3. We display the QR / deeplink to the user.
  *   4. POST {api_url}/GetState   → polling fallback while waiting (optional)
  *   5. T-Bank → POST our /payments/webhook/tbank with the final status.
@@ -56,8 +56,9 @@ class TBankPaymentGateway implements PaymentGateway
         // Step 1 — Init: register payment intent on T-Bank.
         $initBody = [
             'TerminalKey' => $this->terminalKey,
-            // T-Bank wants kopecks (amount × 100).
-            'Amount' => (int) round((float) $request->amount * 100),
+            // T-Bank wants kopecks (amount × 100). Charge the payable amount
+            // (base + service fee); the balance is credited with the base amount.
+            'Amount' => (int) round($request->payable_amount * 100),
             'OrderId' => (string) $request->id,
             'Description' => 'Пополнение баланса naToke #'.$request->id,
             'NotificationURL' => route('payments.webhook.tbank'),
@@ -72,16 +73,17 @@ class TBankPaymentGateway implements PaymentGateway
         }
         $paymentId = (string) ($initResp['PaymentId'] ?? '');
 
-        // Step 2 — QR: ask T-Bank for the SBP QR-string and deeplink.
+        // Step 2 — GetQr: ask T-Bank for the SBP payload string.
+        // DataType is intentionally omitted — it defaults to PAYLOAD (the SBP string),
+        // which keeps the token over just {TerminalKey, PaymentId} and avoids sign mismatches.
         $qrBody = [
             'TerminalKey' => $this->terminalKey,
             'PaymentId' => $paymentId,
-            'DataType' => 'PAYLOAD', // PAYLOAD = SBP-string; IMAGE = base64 PNG
         ];
         $qrBody['Token'] = $this->signToken($qrBody);
-        $qrResp = $this->post('QR', $qrBody);
+        $qrResp = $this->post('GetQr', $qrBody);
         if (! ($qrResp['Success'] ?? false)) {
-            throw new RuntimeException('T-Bank QR failed: '.($qrResp['Message'] ?? json_encode($qrResp)));
+            throw new RuntimeException('T-Bank GetQr failed: '.($qrResp['Message'] ?? json_encode($qrResp)));
         }
 
         $request->fill([
@@ -112,6 +114,28 @@ class TBankPaymentGateway implements PaymentGateway
         $this->applyExternalStatus($request, (string) ($resp['Status'] ?? ''), $resp);
     }
 
+    public function cancel(PaymentRequest $request): array
+    {
+        if (! $request->external_id) {
+            throw new RuntimeException('No T-Bank PaymentId to cancel.');
+        }
+        // POST /Cancel — full cancel/refund of the payment identified by PaymentId.
+        $body = [
+            'TerminalKey' => $this->terminalKey,
+            'PaymentId' => $request->external_id,
+        ];
+        $body['Token'] = $this->signToken($body);
+        $resp = $this->post('Cancel', $body);
+        if (! ($resp['Success'] ?? false)) {
+            throw new RuntimeException('T-Bank Cancel failed: '.($resp['Message'] ?? json_encode($resp)));
+        }
+        // Reflect the resulting status locally right away. A REFUNDED/REVERSED/CANCELED
+        // notification may also arrive later; PaymentService methods are idempotent.
+        $this->applyExternalStatus($request, (string) ($resp['Status'] ?? 'REFUNDED'), $resp);
+
+        return $resp;
+    }
+
     public function handleWebhook(array $payload, ?string $rawBody = null): ?PaymentRequest
     {
         // T-Bank signs notification with the same Token scheme. Verify it before trusting.
@@ -138,28 +162,32 @@ class TBankPaymentGateway implements PaymentGateway
     {
         // T-Bank status reference (subset):
         //   NEW, FORM_SHOWED, AUTHORIZING, AUTHORIZED, CONFIRMING, CONFIRMED,
-        //   REVERSING, REVERSED, REFUNDING, REFUNDED, REJECTED, DEADLINE_EXPIRED
-        $mapped = match (strtoupper($externalStatus)) {
-            'CONFIRMED', 'AUTHORIZED' => PaymentStatus::Confirmed,
-            'REJECTED', 'DEADLINE_EXPIRED', 'REVERSED', 'REFUNDED' => PaymentStatus::Failed,
-            default => null,
-        };
-        if ($mapped === null) {
-            return;
-        }
+        //   REVERSING, REVERSED, REFUNDING, REFUNDED, REJECTED, DEADLINE_EXPIRED, CANCELED
+        $status = strtoupper($externalStatus);
 
-        // Confirm/fail handling is delegated to PaymentController so audit log + balance
-        // updates happen in one place. We just stash the latest provider payload here.
+        // Stash the latest provider payload for traceability.
         $request->gateway_payload = array_merge((array) $request->gateway_payload, [
             'last_remote_status' => $externalStatus,
             'last_remote_payload' => $raw,
         ]);
         $request->save();
 
-        if ($mapped === PaymentStatus::Confirmed && $request->status === PaymentStatus::Pending) {
-            app(\App\Services\Payments\PaymentService::class)->confirm($request);
-        } elseif ($mapped === PaymentStatus::Failed && $request->status === PaymentStatus::Pending) {
-            app(\App\Services\Payments\PaymentService::class)->fail($request, $externalStatus);
+        // Balance/audit changes are delegated to PaymentService so they happen in one
+        // place. All service methods are idempotent (guard on current status).
+        $service = app(\App\Services\Payments\PaymentService::class);
+
+        if (in_array($status, ['CONFIRMED', 'AUTHORIZED'], true)) {
+            $service->confirm($request);
+        } elseif (in_array($status, ['REFUNDED', 'REVERSED'], true)) {
+            // Full refund/reversal: reverse the balance if we had credited it,
+            // otherwise treat a not-yet-credited payment as failed.
+            if ($request->status === PaymentStatus::Confirmed) {
+                $service->refund($request, $status);
+            } else {
+                $service->fail($request, $status);
+            }
+        } elseif (in_array($status, ['REJECTED', 'DEADLINE_EXPIRED', 'CANCELED', 'CANCELLED'], true)) {
+            $service->fail($request, $status);
         }
     }
 

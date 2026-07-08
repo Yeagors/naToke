@@ -29,6 +29,12 @@ interface PaymentGateway
     public function handleWebhook(array $payload, ?string $rawBody = null): ?PaymentRequest;
 
     /**
+     * Cancel / fully refund a payment on the provider side.
+     * Returns the raw provider response.
+     */
+    public function cancel(PaymentRequest $request): array;
+
+    /**
      * Provider key for logging/storage ("fake" / "tbank").
      */
     public function name(): string;

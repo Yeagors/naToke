@@ -143,27 +143,46 @@
 
     {{-- Top-up by SBP QR modal (available to everyone) --}}
     <x-modal name="topup-qr-modal" maxWidth="md" :show="$errors->hasAny(['amount']) && session('open_topup')">
-        <form method="POST" action="{{ route('payments.create') }}">
+        <form method="POST" action="{{ route('payments.create') }}"
+              x-data="{ amount: {{ (float) old('amount', 1000) }}, feePercent: {{ (float) config('payments.topup_fee_percent', 0) }},
+                        get charge() { const a = parseFloat(this.amount) || 0; return Math.round(a * (1 + this.feePercent/100) * 100) / 100; } }">
             @csrf
             <div class="p-6">
                 <h3 class="text-lg font-display font-bold mb-1">Пополнение баланса · СБП</h3>
                 <p class="text-sm text-ink-300 mb-5">
-                    После подтверждения вы получите QR-код. Отсканируйте его в банковском приложении
-                    или нажмите кнопку «Имитировать оплату» (демо-режим).
+                    После подтверждения вы получите QR-код СБП. Отсканируйте его в банковском приложении
+                    — баланс пополнится автоматически.
                 </p>
 
                 <div class="mb-4">
-                    <x-input-label for="amount" :value="'Сумма (₽) *'" />
+                    <x-input-label for="amount" :value="'Сумма пополнения (₽) *'" />
                     <x-text-input id="amount" type="number" step="0.01"
                                   min="{{ (int) config('payments.min_amount', 50) }}"
                                   max="{{ (int) config('payments.max_amount', 100000) }}"
-                                  name="amount" :value="old('amount', 1000)" required />
+                                  name="amount" x-model.number="amount" :value="old('amount', 1000)" required />
                     <p class="text-xs text-ink-300 mt-1">
                         От {{ number_format((float) config('payments.min_amount', 50), 0, '.', ' ') }} ₽
                         до {{ number_format((float) config('payments.max_amount', 100000), 0, '.', ' ') }} ₽.
                     </p>
                     <x-input-error :messages="$errors->get('amount')" />
                 </div>
+
+                @if(config('payments.topup_fee_percent', 0) > 0)
+                    <div class="mb-4 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm">
+                        <div class="flex items-center justify-between text-ink-300">
+                            <span>Зачислится на баланс</span>
+                            <span class="text-ink-100 font-mono" x-text="(parseFloat(amount)||0).toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ₽'"></span>
+                        </div>
+                        <div class="flex items-center justify-between text-ink-300 mt-1">
+                            <span>Комиссия сервиса ({{ rtrim(rtrim(number_format((float) config('payments.topup_fee_percent'), 2, '.', ''), '0'), '.') }}%)</span>
+                            <span class="font-mono" x-text="(charge - (parseFloat(amount)||0)).toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ₽'"></span>
+                        </div>
+                        <div class="flex items-center justify-between mt-2 pt-2 border-t border-white/10 font-semibold">
+                            <span>К оплате по СБП</span>
+                            <span class="text-neon-cyan font-mono" x-text="charge.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ₽'"></span>
+                        </div>
+                    </div>
+                @endif
 
                 <div class="mb-2">
                     <x-input-label for="comment" :value="'Комментарий'" />

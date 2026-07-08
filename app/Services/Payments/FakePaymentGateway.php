@@ -51,4 +51,13 @@ class FakePaymentGateway implements PaymentGateway
     {
         return null; // Fake gateway never receives provider webhooks.
     }
+
+    public function cancel(PaymentRequest $request): array
+    {
+        // No remote side — reverse the balance locally if it was credited.
+        if ($request->isConfirmed()) {
+            app(PaymentService::class)->refund($request, 'демо-возврат');
+        }
+        return ['Success' => true, 'Status' => 'REFUNDED'];
+    }
 }

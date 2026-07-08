@@ -41,8 +41,14 @@
             <div class="text-center mb-6">
                 <div class="text-xs uppercase tracking-[0.32em] text-ink-300 mb-1">К оплате</div>
                 <div class="text-5xl font-display font-bold text-gradient drop-shadow-[0_0_30px_rgba(0,229,255,0.30)]">
-                    {{ number_format((float) $payment->amount, 2, '.', ' ') }} <span class="opacity-70 text-3xl">₽</span>
+                    {{ number_format($payment->payable_amount, 2, '.', ' ') }} <span class="opacity-70 text-3xl">₽</span>
                 </div>
+                @if($payment->fee_amount > 0)
+                    <p class="text-xs text-ink-300 mt-2">
+                        На баланс зачислится <span class="text-ink-100 font-semibold">{{ number_format((float) $payment->amount, 2, '.', ' ') }} ₽</span>
+                        · комиссия сервиса {{ number_format($payment->fee_amount, 2, '.', ' ') }} ₽
+                    </p>
+                @endif
             </div>
 
             {{-- STATUS BADGE --}}
@@ -59,7 +65,7 @@
                         <span class="text-sm font-semibold">Платёж зачислен!</span>
                     </div>
                 </template>
-                <template x-if="status === 'failed' || status === 'cancelled'">
+                <template x-if="status === 'failed' || status === 'cancelled' || status === 'refunded'">
                     <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neon-red/10 border border-neon-red/40 text-neon-red">
                         <span class="text-sm font-semibold" x-text="statusLabel"></span>
                     </div>
@@ -113,9 +119,13 @@
                 </a>
             </div>
 
-            {{-- ERROR panel --}}
+            {{-- ERROR / REFUND panel --}}
             <div x-show="status === 'failed' || status === 'cancelled'" x-cloak class="text-center pt-2">
                 <p class="text-sm text-ink-300 mb-3">Платёж не прошёл. Попробуйте ещё раз.</p>
+                <a href="{{ route('profile.edit') }}" class="btn btn-ghost">Назад в профиль</a>
+            </div>
+            <div x-show="status === 'refunded'" x-cloak class="text-center pt-2">
+                <p class="text-sm text-ink-300 mb-3">Платёж возвращён. Сумма списана с баланса.</p>
                 <a href="{{ route('profile.edit') }}" class="btn btn-ghost">Назад в профиль</a>
             </div>
         </div>

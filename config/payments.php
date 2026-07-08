@@ -23,6 +23,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Top-up service fee (percent)
+    |--------------------------------------------------------------------------
+    |
+    | Added on top of the requested amount to cover the acquiring commission.
+    | The user's balance is credited with the requested amount; the SBP charge
+    | is amount × (1 + fee/100). Example: fee 3, request 1000 → charge 1030,
+    | balance +1000.
+    |
+    */
+    'topup_fee_percent' => (float) env('PAYMENTS_TOPUP_FEE_PERCENT', 3),
+
+    /*
+    |--------------------------------------------------------------------------
     | Gateways
     |--------------------------------------------------------------------------
     */

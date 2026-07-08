@@ -12,6 +12,7 @@ class PaymentRequest extends Model
         'user_id',
         'initiated_by',
         'amount',
+        'charge_amount',
         'status',
         'gateway',
         'external_id',
@@ -28,10 +29,26 @@ class PaymentRequest extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'charge_amount' => 'decimal:2',
             'status' => PaymentStatus::class,
             'gateway_payload' => 'array',
             'confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Amount actually charged via SBP (base amount + service fee).
+     * Falls back to the base amount for legacy rows created before the fee.
+     */
+    public function getPayableAmountAttribute(): float
+    {
+        return (float) ($this->charge_amount ?? $this->amount);
+    }
+
+    /** Service fee portion (charge − credited amount). */
+    public function getFeeAmountAttribute(): float
+    {
+        return max(0, $this->payable_amount - (float) $this->amount);
     }
 
     public function user(): BelongsTo
