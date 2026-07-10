@@ -88,6 +88,19 @@ class PaymentService
 
         $request->refresh();
 
+        // Split the incoming payment between the owners (separate company accounting).
+        try {
+            $basis = config('owners.split_basis', 'base');
+            $splitAmount = $basis === 'charge'
+                ? (float) ($request->charge_amount ?: $request->amount)
+                : (float) $request->amount;
+            app(\App\Services\CompanyLedger::class)->record(
+                'income', $splitAmount, "Пополнение по СБП #{$request->id}", 'sbp', $request->id, $actorId
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         ActivityLogger::log(
             'payments.confirmed',
             $request,

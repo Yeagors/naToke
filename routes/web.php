@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\BatteryController;
 use App\Http\Controllers\CarController;
+use App\Http\Controllers\CompanyTransactionController;
 use App\Http\Controllers\CarTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PaymentController;
@@ -36,6 +38,11 @@ Route::middleware('auth')->group(function () {
         ->name('payments.fake.confirm');
 
     Route::middleware('admin')->group(function () {
+        // Company finances (owner-split income/expenses)
+        Route::get('/company', [CompanyTransactionController::class, 'index'])->name('company.index');
+        Route::get('/company/create', [CompanyTransactionController::class, 'create'])->name('company.create');
+        Route::post('/company', [CompanyTransactionController::class, 'store'])->name('company.store');
+
         // SBP top-ups (admin overview + refund)
         Route::get('/sbp-payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::post('/payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
@@ -58,6 +65,13 @@ Route::middleware('auth')->group(function () {
         Route::patch('/cars/{car}', [CarController::class, 'update'])->name('cars.update');
         Route::post('/cars/{car}/transactions', [CarTransactionController::class, 'store'])->name('cars.transactions.store');
         Route::post('/cars/{car}/rentals', [RentalController::class, 'store'])->name('cars.rentals.store');
+
+        // Batteries (АКБ)
+        Route::get('/batteries', [BatteryController::class, 'index'])->name('batteries.index');
+        Route::get('/batteries/create', [BatteryController::class, 'create'])->name('batteries.create');
+        Route::post('/batteries', [BatteryController::class, 'store'])->name('batteries.store');
+        Route::get('/batteries/{battery}/edit', [BatteryController::class, 'edit'])->name('batteries.edit');
+        Route::patch('/batteries/{battery}', [BatteryController::class, 'update'])->name('batteries.update');
 
         // Tariffs
         Route::get('/tariffs', [TariffController::class, 'index'])->name('tariffs.index');

@@ -87,8 +87,8 @@
             <td>{{ $car->frame_number ?: '—' }}</td>
         </tr>
         <tr>
-            <td>Аккумуляторная батарея {{ $car->battery_capacity ?: '' }}</td>
-            <td>{{ $car->battery_number ?: '—' }}</td>
+            <td>Аккумуляторная батарея {{ $batteryCapacity ?: '' }}</td>
+            <td>{{ $batteryVin ?: '—' }}</td>
         </tr>
     </table>
 
@@ -105,7 +105,7 @@
     <p>2.2 Полная оценочная стоимость электровелосипеда:</p>
     <table class="grid">
         <tr><td>Электровелосипед: {{ trim($car->brand.' '.$car->model) }}</td><td style="width:30%">{{ $car->purchase_price ? $money($car->purchase_price).' руб.' : '—' }}</td></tr>
-        <tr><td>Аккумуляторная батарея {{ $car->battery_capacity ?: '' }}</td><td>{{ $money(config('contract.battery_valuation')) }} руб.</td></tr>
+        <tr><td>Аккумуляторная батарея {{ $batteryCapacity ?: '' }}</td><td>{{ $money(config('contract.battery_valuation')) }} руб.</td></tr>
     </table>
     <p>2.3. Оплата производится наличными денежными средствами или переводом на банковскую карту после подписания и продления договора.</p>
     <p>2.4. Настоящий договор может быть продлён на новый срок по соглашению сторон.</p>
@@ -173,7 +173,7 @@
     <p>1. В соответствии с п. 1.1 Договора Арендодатель предоставляет во временное владение и пользование транспортное средство без оказания услуг по управлению им и его технической эксплуатации:</p>
     <table class="grid">
         <tr><td style="width:45%">VIN номер (номер рамы)</td><td>{{ $car->frame_number ?: '—' }}</td></tr>
-        <tr><td>VIN номер (номер батареи)</td><td>{{ $car->battery_number ?: '—' }}</td></tr>
+        <tr><td>VIN номер (номер батареи)</td><td>{{ $batteryVin ?: '—' }}</td></tr>
         <tr><td>По адресу</td><td>{{ config('contract.handover_address') }}</td></tr>
         <tr><td>Дата выдачи</td><td>{{ $rentDate }}</td></tr>
         <tr><td>Территория эксплуатации</td><td>{{ config('contract.operation_area') }}</td></tr>

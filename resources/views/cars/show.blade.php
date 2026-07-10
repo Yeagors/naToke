@@ -535,6 +535,21 @@
                     </div>
 
                     <div>
+                        <x-input-label for="battery_id" :value="'Аккумулятор (АКБ)'" />
+                        @php
+                            $batteryOptions = ($batteries ?? collect())->map(fn ($b) => [
+                                'value' => $b->id,
+                                'label' => ($b->callsign ? $b->callsign.' · ' : '').($b->capacity ? $b->capacity.' · ' : '').$b->vin,
+                            ])->all();
+                        @endphp
+                        <x-select name="battery_id" :value="old('battery_id')" :options="$batteryOptions" placeholder="— без АКБ —" />
+                        @if(($batteries ?? collect())->isEmpty())
+                            <p class="text-xs text-ink-300 mt-1">Нет свободных АКБ для модели «{{ $car->display_name }}». <a href="{{ route('batteries.create') }}" class="underline text-neon-cyan">Добавить</a>.</p>
+                        @endif
+                        <x-input-error :messages="$errors->get('battery_id')" />
+                    </div>
+
+                    <div>
                         <x-input-label for="comment" :value="'Комментарий'" />
                         <textarea id="comment" name="comment" rows="2" maxlength="2000"
                                   class="block w-full rounded-xl border-white/10 bg-ink-800/70 text-ink-100 focus:border-neon-cyan focus:ring-neon-cyan">{{ old('comment') }}</textarea>

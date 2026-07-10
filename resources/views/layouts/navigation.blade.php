@@ -41,6 +41,10 @@
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10l1.5-4.5h-5L11 10m-1 4h4m-7 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H7a2 2 0 00-2 2v4a2 2 0 002 2zm1-4a1 1 0 100-2 1 1 0 000 2zm6 0a1 1 0 100-2 1 1 0 000 2z"/></svg>
                             Авто
                         </a>
+                        <a href="{{ route('batteries.index') }}" class="nav-link {{ request()->routeIs('batteries.*') ? 'active' : '' }}">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            АКБ
+                        </a>
                         <a href="{{ route('rentals.index') }}" class="nav-link {{ request()->routeIs('rentals.*') ? 'active' : '' }}">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             Аренды
@@ -52,6 +56,10 @@
                         <a href="{{ route('payments.index') }}" class="nav-link {{ request()->routeIs('payments.index') ? 'active' : '' }}">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm12 2h2v2h-2zm-2 2h2v2h-2zm2 0h2v2h-2zm-2-4h2v2h-2zm4-2h2v2h-2zm0 4h2v2h-2z"/></svg>
                             Пополнения
+                        </a>
+                        <a href="{{ route('company.index') }}" class="nav-link {{ request()->routeIs('company.*') ? 'active' : '' }}">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M4 21V7l8-4 8 4v14M9 21v-6h6v6"/></svg>
+                            Компания
                         </a>
                         <a href="{{ route('tariffs.index') }}" class="nav-link {{ request()->routeIs('tariffs.*') ? 'active' : '' }}">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10v10H7zM3 3l4 4M21 3l-4 4M3 21l4-4M21 21l-4-4"/></svg>
@@ -137,9 +145,11 @@
                 @if($isAdmin)
                     <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">Пользователи</a>
                     <a href="{{ route('cars.index') }}" class="nav-link {{ request()->routeIs('cars.*') ? 'active' : '' }}">Авто</a>
+                    <a href="{{ route('batteries.index') }}" class="nav-link {{ request()->routeIs('batteries.*') ? 'active' : '' }}">АКБ</a>
                     <a href="{{ route('rentals.index') }}" class="nav-link {{ request()->routeIs('rentals.*') ? 'active' : '' }}">Аренды</a>
                     <a href="{{ route('transactions.index') }}" class="nav-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}">Транзакции</a>
                     <a href="{{ route('payments.index') }}" class="nav-link {{ request()->routeIs('payments.index') ? 'active' : '' }}">Пополнения</a>
+                    <a href="{{ route('company.index') }}" class="nav-link {{ request()->routeIs('company.*') ? 'active' : '' }}">Компания</a>
                     <a href="{{ route('tariffs.index') }}" class="nav-link {{ request()->routeIs('tariffs.*') ? 'active' : '' }}">Тарифы</a>
                     <a href="{{ route('stats.index') }}" class="nav-link {{ request()->routeIs('stats.*') ? 'active' : '' }}">Статистика</a>
                     <a href="{{ route('logs.index') }}" class="nav-link {{ request()->routeIs('logs.*') ? 'active' : '' }}">Логи</a>

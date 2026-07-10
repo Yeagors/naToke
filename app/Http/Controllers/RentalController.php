@@ -85,10 +85,11 @@ class RentalController extends Controller
 
     /**
      * Generate the rental contract (PDF) filled from the renter + car + landlord profiles.
+     * Buyout rentals (is_buyout) use the lease-to-own template.
      */
     public function contract(Rental $rental): Response
     {
-        $rental->load(['car', 'user', 'creator', 'tariff']);
+        $rental->load(['car', 'user', 'creator', 'tariff', 'battery']);
 
         // Landlord (Арендодатель): configured owner by login, else whoever opened the rental.
         $landlord = null;
@@ -96,15 +97,69 @@ class RentalController extends Controller
             $landlord = User::where('login', $login)->first();
         }
         $landlord = $landlord ?: $rental->creator ?: new User();
+        $renter = $rental->user ?: new User();
+        $car = $rental->car;
 
-        $pdf = Pdf::loadView('contracts.rental', [
-            'rental' => $rental,
-            'renter' => $rental->user ?: new User(),
-            'car' => $rental->car,
-            'landlord' => $landlord,
-        ])->setPaper('a4');
+        // Battery info comes from the assigned АКБ if any, else the car's own fields.
+        $batteryCapacity = $rental->battery?->capacity ?: $car?->battery_capacity;
+        $batteryVin = $rental->battery?->vin ?: $car?->battery_number;
 
-        return $pdf->download('dogovor-arendy-'.$rental->id.'.pdf');
+        // Block download until every field the contract needs is filled in.
+        $missing = $this->contractMissingFields($renter, $landlord, $car, $batteryCapacity, $batteryVin);
+        if ($missing !== []) {
+            return redirect()->route('rentals.show', $rental)->with('toast', [
+                'type' => 'error',
+                'message' => 'Договор не готов — заполните поля: '.implode('; ', $missing).'.',
+            ]);
+        }
+
+        $view = $rental->is_buyout ? 'contracts.buyout' : 'contracts.rental';
+        $prefix = $rental->is_buyout ? 'dogovor-vykupa-' : 'dogovor-arendy-';
+
+        $pdf = Pdf::loadView($view, compact('rental', 'renter', 'car', 'landlord', 'batteryCapacity', 'batteryVin'))->setPaper('a4');
+
+        return $pdf->download($prefix.$rental->id.'.pdf');
+    }
+
+    /**
+     * Returns a list of human-readable field names required for the contract that
+     * are currently empty (across renter, landlord and car).
+     */
+    private function contractMissingFields(User $renter, User $landlord, ?Car $car, ?string $batteryCapacity = null, ?string $batteryVin = null): array
+    {
+        $userFields = [
+            'last_name' => 'фамилия',
+            'first_name' => 'имя',
+            'birth_date' => 'дата рождения',
+            'birth_place' => 'место рождения',
+            'passport_series' => 'серия паспорта',
+            'passport_number' => 'номер паспорта',
+            'passport_issued_by' => 'кем выдан паспорт',
+            'passport_issued_at' => 'дата выдачи паспорта',
+            'address_registration' => 'адрес регистрации',
+            'phone' => 'телефон',
+        ];
+        $carFields = [
+            'brand' => 'марка',
+            'model' => 'модель',
+            'frame_number' => 'номер рамы',
+        ];
+
+        $missing = [];
+        foreach ($userFields as $f => $label) {
+            if (blank($renter->{$f})) $missing[] = "арендатор — {$label}";
+        }
+        foreach ($userFields as $f => $label) {
+            if (blank($landlord->{$f})) $missing[] = "арендодатель — {$label}";
+        }
+        foreach ($carFields as $f => $label) {
+            if (! $car || blank($car->{$f})) $missing[] = "авто — {$label}";
+        }
+        // Battery (from the assigned АКБ or the car's own fields).
+        if (blank($batteryCapacity)) $missing[] = 'АКБ — ёмкость';
+        if (blank($batteryVin)) $missing[] = 'АКБ — номер (вин)';
+
+        return $missing;
     }
 
     public function store(StoreRentalRequest $request, Car $car): RedirectResponse
@@ -118,12 +173,21 @@ class RentalController extends Controller
             return back()->withErrors(['user_id' => 'У авто уже есть активная или приостановленная аренда — закройте её перед началом новой.']);
         }
 
+        // The chosen battery must be free (not on another active rental).
+        if (! empty($data['battery_id'])) {
+            $battery = \App\Models\Battery::find($data['battery_id']);
+            if (! $battery || ! $battery->isAvailable()) {
+                return back()->withErrors(['battery_id' => 'Выбранная АКБ уже используется в другой аренде.']);
+            }
+        }
+
         $startedAt = ! empty($data['started_at']) ? Carbon::parse($data['started_at']) : now();
 
         $rental = DB::transaction(function () use ($car, $user, $tariff, $startedAt, $data, $request) {
             $rental = $car->rentals()->create([
                 'user_id' => $user->id,
                 'tariff_id' => $tariff->id,
+                'battery_id' => $data['battery_id'] ?? null,
                 'status' => RentalStatus::Open,
                 'amount' => $tariff->amount,
                 'period' => $tariff->period,

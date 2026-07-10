@@ -83,7 +83,12 @@ class PaymentController extends Controller
             $this->gateways->make($payment->gateway)->cancel($payment);
         } catch (Throwable $e) {
             report($e);
-            return back()->with('toast', ['type' => 'error', 'message' => 'Возврат не удался: '.$e->getMessage()]);
+            $msg = $e->getMessage();
+            // T-Bank финансирует возврат с эквайрингового остатка, а не с расчётного счёта.
+            if (mb_stripos($msg, 'недостаточ') !== false || mb_stripos($msg, 'баланс') !== false) {
+                $msg = 'на эквайринговом счёте T-Bank недостаточно средств для возврата (возврат идёт с остатка в T-Bank, а не с расчётного счёта). Пополните остаток в кабинете T-Bank или обратитесь в поддержку банка. Ответ банка: «'.$e->getMessage().'»';
+            }
+            return back()->with('toast', ['type' => 'error', 'message' => 'Возврат не удался: '.$msg]);
         }
 
         return back()->with('toast', ['type' => 'success', 'message' => "Платёж #{$payment->id} возвращён."]);

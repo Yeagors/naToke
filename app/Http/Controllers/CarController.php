@@ -70,7 +70,13 @@ class CarController extends Controller
 
         $tariffs = Tariff::where('is_active', true)->orderBy('name')->get();
 
-        return view('cars.show', compact('car', 'tariffs'));
+        // Свободные АКБ, подходящие по модели (плюс уже привязанная к активной аренде — на всякий).
+        $batteries = \App\Models\Battery::query()
+            ->available()
+            ->where('car_model', $car->display_name)
+            ->orderBy('callsign')->get();
+
+        return view('cars.show', compact('car', 'tariffs', 'batteries'));
     }
 
     public function update(StoreCarRequest $request, Car $car): RedirectResponse
