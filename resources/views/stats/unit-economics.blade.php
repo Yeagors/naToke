@@ -164,11 +164,7 @@
                                             </div>
                                         @endif
                                         <div class="min-w-0">
-                                            <div class="font-medium truncate group-hover:text-neon-cyan transition">{{ $c->display_name }}</div>
-                                            <div class="text-xs text-ink-300 font-mono">
-                                                {{ $c->license_plate }}
-                                                @if($row['in_use_now']) · <span class="text-neon-lime">в аренде</span>@endif
-                                            </div>
+                                            <div class="font-medium truncate group-hover:text-neon-cyan transition">{{ $c->license_plate }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -295,7 +291,7 @@
                                     <div class="w-10 h-7 rounded-md bg-white/5 ring-1 ring-white/10"></div>
                                 @endif
                                 <div class="min-w-0 flex-1">
-                                    <div class="font-medium truncate">{{ $c->display_name }}</div>
+                                    <div class="font-medium truncate">{{ $c->license_plate }}</div>
                                     <div class="text-xs text-ink-300 font-mono">{{ $c->license_plate }}</div>
                                 </div>
                             </div>

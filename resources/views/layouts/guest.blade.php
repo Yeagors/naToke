@@ -6,6 +6,14 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="theme-color" content="#0a0b16">
 
+        {{-- PWA --}}
+        <link rel="manifest" href="/manifest.webmanifest">
+        <link rel="apple-touch-icon" href="/icons/icon-192.png">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="naToke">
+
         <title>{{ config('app.name', 'naToke') }} — @yield('title', 'Вход')</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -55,5 +63,11 @@
                 </div>
             </footer>
         </div>
+
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+            }
+        </script>
     </body>
 </html>

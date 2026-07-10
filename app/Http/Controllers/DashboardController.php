@@ -19,6 +19,15 @@ class DashboardController extends Controller
             'recent_transactions' => $user->transactions()->take(5)->get(),
         ];
 
+        if (! $user->isAdmin()) {
+            // Активная аренда водителя для «экрана водителя».
+            $stats['active_rental'] = $user->rentals()
+                ->whereIn('status', ['open', 'paused'])
+                ->with(['car', 'tariff', 'battery'])
+                ->latest('id')
+                ->first();
+        }
+
         if ($user->isAdmin()) {
             $stats['users_count'] = User::count();
             $stats['cars_count'] = Car::count();

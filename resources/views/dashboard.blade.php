@@ -149,9 +149,59 @@
                 </div>
             </div>
         @else
-            {{-- Driver dashboard --}}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="glass rounded-2xl p-6 lg:col-span-2">
+            {{-- Driver "app" screen --}}
+            @php $rental = $stats['active_rental'] ?? null; @endphp
+
+            {{-- Primary CTA: top up --}}
+            <a href="{{ route('profile.edit') }}" class="btn btn-primary w-full justify-center mb-6 py-3.5 text-base">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm12 2h2v2h-2zm-2 2h2v2h-2zm2 0h2v2h-2zm-2-4h2v2h-2zm4-2h2v2h-2zm0 4h2v2h-2z"/></svg>
+                Пополнить баланс по QR (СБП)
+            </a>
+
+            {{-- My rental --}}
+            @if($rental)
+                <a href="{{ route('rentals.show', $rental) }}" class="block glass card-lift rounded-2xl p-6 mb-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-lg font-display font-semibold">Моя аренда #{{ $rental->id }}</h2>
+                        <span class="badge {{ $rental->status->badgeClass() }}">{{ $rental->status->label() }}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <div class="stat-label">Электровелосипед</div>
+                            <div class="font-medium mt-0.5">{{ $rental->car?->display_name ?? '—' }}</div>
+                            <div class="text-xs text-ink-300">{{ $rental->car?->license_plate }}@if($rental->battery) · АКБ {{ $rental->battery->callsign ?: $rental->battery->vin }}@endif</div>
+                        </div>
+                        <div>
+                            <div class="stat-label">Списание</div>
+                            <div class="font-medium mt-0.5 font-mono text-neon-cyan">{{ number_format((float) $rental->amount, 2, '.', ' ') }} ₽</div>
+                            <div class="text-xs text-ink-300">каждые {{ $rental->period_count }} {{ $rental->period->label() }}</div>
+                        </div>
+                        @if($rental->next_charge_at && $rental->isOpen())
+                            <div>
+                                <div class="stat-label">Следующее списание</div>
+                                <div class="font-medium mt-0.5">{{ $rental->next_charge_at->format('d.m.Y H:i') }}</div>
+                                <div class="text-xs text-ink-300">{{ $rental->next_charge_at->diffForHumans() }}</div>
+                            </div>
+                        @endif
+                        @if($rental->is_buyout)
+                            <div>
+                                <div class="stat-label">Выкуп</div>
+                                <div class="font-medium mt-0.5 text-neon-violet">осталось {{ number_format((float) ($rental->buyout_remaining ?? 0), 0, '.', ' ') }} ₽</div>
+                                <div class="mt-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                    <div class="h-full bg-neon-violet" style="width: {{ $rental->buyout_progress_percent }}%"></div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </a>
+            @else
+                <div class="glass rounded-2xl p-6 mb-6 text-center text-ink-300">
+                    Активной аренды нет. Обратитесь к администратору, чтобы оформить аренду велосипеда.
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 gap-6">
+                <div class="glass rounded-2xl p-6">
                     <h2 class="text-lg font-display font-semibold mb-4">Мои транзакции</h2>
                     @forelse($stats['recent_transactions'] as $t)
                         @if($t->rental_id)
