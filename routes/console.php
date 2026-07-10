@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\ExpireStalePayments;
 use App\Console\Commands\ProcessRentalCharges;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -18,3 +19,10 @@ Schedule::command(ProcessRentalCharges::class)
     ->withoutOverlapping()
     ->onOneServer()
     ->runInBackground();
+
+// Payments: cancel top-ups stuck in "pending" for more than 24h (hourly).
+Schedule::command(ExpireStalePayments::class)
+    ->hourly()
+    ->timezone('Europe/Moscow')
+    ->withoutOverlapping()
+    ->onOneServer();

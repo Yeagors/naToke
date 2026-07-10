@@ -114,9 +114,16 @@
                 </div>
                 <p class="text-lg font-display font-semibold text-ink-100">+{{ number_format((float) $payment->amount, 2, '.', ' ') }} ₽ зачислено</p>
                 <p class="text-sm text-ink-300 mt-1">Баланс обновится автоматически.</p>
-                <a href="{{ route('profile.edit') }}" class="btn btn-primary mt-5">
-                    Вернуться в профиль
-                </a>
+                <div class="flex items-center justify-center gap-2 mt-5">
+                    <a href="{{ route('profile.edit') }}" class="btn btn-primary">Вернуться в профиль</a>
+                    @if(auth()->user()?->isAdmin() && $payment->isConfirmed())
+                        <form method="POST" action="{{ route('payments.refund', $payment) }}"
+                              onsubmit="return confirm('Вернуть платёж #{{ $payment->id }}? Сумма спишется с баланса пользователя.')">
+                            @csrf
+                            <button type="submit" class="btn btn-ghost text-neon-red border-neon-red/30 hover:bg-neon-red/10">Возврат</button>
+                        </form>
+                    @endif
+                </div>
             </div>
 
             {{-- ERROR / REFUND panel --}}
@@ -155,6 +162,11 @@
                         // Subtle reload after confirmation to show updated balance everywhere.
                         if (this.status === 'confirmed') {
                             setTimeout(() => { location.reload(); }, 1800);
+                        } else {
+                            // failed / cancelled / refunded → surface a toast
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: { type: 'error', message: 'Платёж не прошёл: ' + (this.statusLabel || 'ошибка') }
+                            }));
                         }
                     }
                 } catch (e) {

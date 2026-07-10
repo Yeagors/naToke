@@ -11,11 +11,13 @@ use App\Models\Tariff;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class RentalController extends Controller
 {
@@ -79,6 +81,30 @@ class RentalController extends Controller
         ]);
 
         return view('rentals.show', compact('rental'));
+    }
+
+    /**
+     * Generate the rental contract (PDF) filled from the renter + car + landlord profiles.
+     */
+    public function contract(Rental $rental): Response
+    {
+        $rental->load(['car', 'user', 'creator', 'tariff']);
+
+        // Landlord (Арендодатель): configured owner by login, else whoever opened the rental.
+        $landlord = null;
+        if ($login = config('contract.landlord_login')) {
+            $landlord = User::where('login', $login)->first();
+        }
+        $landlord = $landlord ?: $rental->creator ?: new User();
+
+        $pdf = Pdf::loadView('contracts.rental', [
+            'rental' => $rental,
+            'renter' => $rental->user ?: new User(),
+            'car' => $rental->car,
+            'landlord' => $landlord,
+        ])->setPaper('a4');
+
+        return $pdf->download('dogovor-arendy-'.$rental->id.'.pdf');
     }
 
     public function store(StoreRentalRequest $request, Car $car): RedirectResponse

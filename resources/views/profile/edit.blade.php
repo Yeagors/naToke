@@ -36,7 +36,7 @@
                             @csrf
                             @method('PATCH')
                             {{-- Hidden current fields to preserve them when only updating photo --}}
-                            @foreach(['login','last_name','first_name','middle_name','birth_date','passport_series','passport_number','passport_issued_by','passport_issued_at','passport_department_code'] as $f)
+                            @foreach(['login','last_name','first_name','middle_name','phone','phone2','email','birth_date','birth_place','address_registration','address_residence','passport_series','passport_number','passport_issued_by','passport_issued_at','passport_department_code'] as $f)
                                 @php $v = old($f, optional($user->{$f})->format ? $user->{$f}->format('Y-m-d') : $user->{$f}); @endphp
                                 <input type="hidden" name="{{ $f }}" value="{{ $v }}">
                             @endforeach
@@ -79,11 +79,20 @@
                         {{ number_format((float) $user->balance, 2, '.', ' ') }} <span class="text-neon-lime/70 text-2xl">₽</span>
                     </div>
 
-                    {{-- Top-up by SBP QR (driver + admin both) --}}
-                    <button x-data @click="$dispatch('open-modal', 'topup-qr-modal')" class="btn btn-primary w-full mt-4 justify-center">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm12 2h2v2h-2zm-2 2h2v2h-2zm2 0h2v2h-2zm-2-4h2v2h-2zm4-2h2v2h-2zm0 4h2v2h-2z"/></svg>
-                        Пополнить по QR (СБП)
-                    </button>
+                    {{-- Top-up by SBP QR (driver + admin both). Requires a phone or email for the receipt. --}}
+                    @if($user->hasReceiptContact())
+                        <button x-data @click="$dispatch('open-modal', 'topup-qr-modal')" class="btn btn-primary w-full mt-4 justify-center">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm12 2h2v2h-2zm-2 2h2v2h-2zm2 0h2v2h-2zm-2-4h2v2h-2zm4-2h2v2h-2zm0 4h2v2h-2z"/></svg>
+                            Пополнить по QR (СБП)
+                        </button>
+                    @else
+                        <button type="button" disabled title="Укажите телефон или email — они нужны для чека"
+                                class="btn btn-primary w-full mt-4 justify-center opacity-40 cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm12 2h2v2h-2zm-2 2h2v2h-2zm2 0h2v2h-2zm-2-4h2v2h-2zm4-2h2v2h-2zm0 4h2v2h-2z"/></svg>
+                            Пополнить по QR (СБП)
+                        </button>
+                        <p class="text-xs text-neon-red/80 mt-2">Укажите телефон или email в профиле — они нужны для отправки чека.</p>
+                    @endif
 
                     {{-- Admin-only: manual debit/credit (no money movement, ledger adjustment) --}}
                     @if($user->isAdmin())

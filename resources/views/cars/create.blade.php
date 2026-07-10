@@ -63,16 +63,21 @@
             </fieldset>
 
             <fieldset class="rounded-xl border border-white/8 px-4 py-3">
-                <legend class="px-2 text-xs uppercase tracking-[0.18em] text-ink-300">Аккумулятор</legend>
+                <legend class="px-2 text-xs uppercase tracking-[0.18em] text-ink-300">Идентификаторы</legend>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     <div>
-                        <x-input-label for="battery_capacity" :value="'Ёмкость (Вт·ч)'" />
-                        <x-text-input id="battery_capacity" type="number" name="battery_capacity" :value="old('battery_capacity')" min="0" max="500000" />
+                        <x-input-label for="frame_number" :value="'Номер рамы'" />
+                        <x-text-input id="frame_number" type="text" name="frame_number" :value="old('frame_number')" maxlength="100" placeholder="напр. JL20250500125" />
+                        <x-input-error :messages="$errors->get('frame_number')" />
+                    </div>
+                    <div>
+                        <x-input-label for="battery_capacity" :value="'Ёмкость аккумулятора'" />
+                        <x-text-input id="battery_capacity" type="text" name="battery_capacity" :value="old('battery_capacity')" maxlength="50" placeholder="напр. 60/45" />
                         <x-input-error :messages="$errors->get('battery_capacity')" />
                     </div>
                     <div>
-                        <x-input-label for="battery_number" :value="'Серийный номер'" />
-                        <x-text-input id="battery_number" type="text" name="battery_number" :value="old('battery_number')" />
+                        <x-input-label for="battery_number" :value="'Номер аккумулятора'" />
+                        <x-text-input id="battery_number" type="text" name="battery_number" :value="old('battery_number')" maxlength="100" />
                         <x-input-error :messages="$errors->get('battery_number')" />
                     </div>
                 </div>

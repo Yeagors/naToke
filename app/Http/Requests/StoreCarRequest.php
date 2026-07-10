@@ -25,8 +25,9 @@ class StoreCarRequest extends FormRequest
             'purchase_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'purchase_date' => ['nullable', 'date'],
             'comment' => ['nullable', 'string', 'max:2000'],
-            'battery_capacity' => ['nullable', 'integer', 'between:0,500000'],
+            'battery_capacity' => ['nullable', 'string', 'max:50'],
             'battery_number' => ['nullable', 'string', 'max:100'],
+            'frame_number' => ['nullable', 'string', 'max:100'],
             'license_plate' => ['required', 'string', 'max:32', Rule::unique(Car::class)->ignore($carId)],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
@@ -42,8 +43,9 @@ class StoreCarRequest extends FormRequest
             'purchase_price' => 'стоимость закупа',
             'purchase_date' => 'дата покупки',
             'comment' => 'комментарий',
-            'battery_capacity' => 'размер аккумулятора',
+            'battery_capacity' => 'ёмкость аккумулятора',
             'battery_number' => 'номер аккумулятора',
+            'frame_number' => 'номер рамы',
             'license_plate' => 'номер авто',
             'photo' => 'фото',
         ];

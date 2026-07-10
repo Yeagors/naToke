@@ -37,6 +37,7 @@ class TBankPaymentGateway implements PaymentGateway
         private int $timeout = 15,
         private ?string $successUrl = null,
         private ?string $failUrl = null,
+        private array $receipt = [],
     ) {
         if ($this->terminalKey === '' || $this->password === '') {
             throw new RuntimeException(
@@ -65,6 +66,10 @@ class TBankPaymentGateway implements PaymentGateway
         ];
         if ($this->successUrl) $initBody['SuccessURL'] = $this->successUrl;
         if ($this->failUrl)    $initBody['FailURL']    = $this->failUrl;
+        // Fiscal receipt (54-ФЗ). Nested object — excluded from the token by design.
+        if ($receipt = $this->buildReceipt($request)) {
+            $initBody['Receipt'] = $receipt;
+        }
         $initBody['Token'] = $this->signToken($initBody);
 
         $initResp = $this->post('Init', $initBody);
@@ -189,6 +194,47 @@ class TBankPaymentGateway implements PaymentGateway
         } elseif (in_array($status, ['REJECTED', 'DEADLINE_EXPIRED', 'CANCELED', 'CANCELLED'], true)) {
             $service->fail($request, $status);
         }
+    }
+
+    /**
+     * Build the 54-ФЗ receipt object for Init. Returns null when receipts are
+     * disabled. The receipt total must equal the Init Amount (the charged amount).
+     */
+    private function buildReceipt(PaymentRequest $request): ?array
+    {
+        if (empty($this->receipt['enabled'])) {
+            return null;
+        }
+
+        $amountKop = (int) round($request->payable_amount * 100);
+        $user = $request->user;
+
+        // Contact for the receipt: prefer the buyer's phone, else a fallback email.
+        $contact = [];
+        $phone = preg_replace('/\D/', '', (string) ($user->phone ?? ''));
+        if (strlen($phone) === 11 && $phone[0] === '8') {
+            $phone = '7'.substr($phone, 1);
+        }
+        if ($phone !== '') {
+            $contact['Phone'] = '+'.$phone;
+        } elseif (filled($user->email ?? null)) {
+            $contact['Email'] = $user->email;
+        } elseif (! empty($this->receipt['default_email'])) {
+            $contact['Email'] = $this->receipt['default_email'];
+        }
+
+        return array_merge($contact, [
+            'Taxation' => $this->receipt['taxation'] ?? 'usn_income',
+            'Items' => [[
+                'Name' => mb_substr((string) ($this->receipt['item_name'] ?? 'Пополнение баланса'), 0, 128),
+                'Price' => $amountKop,
+                'Quantity' => 1,
+                'Amount' => $amountKop,
+                'Tax' => $this->receipt['vat'] ?? 'none',
+                'PaymentMethod' => $this->receipt['payment_method'] ?? 'full_payment',
+                'PaymentObject' => $this->receipt['payment_object'] ?? 'service',
+            ]],
+        ]);
     }
 
     private function post(string $method, array $body): array

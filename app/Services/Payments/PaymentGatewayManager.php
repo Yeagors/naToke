@@ -43,6 +43,7 @@ class PaymentGatewayManager
                 timeout: (int) ($cfg['http_timeout'] ?? 15),
                 successUrl: $cfg['success_url'] ?? null,
                 failUrl: $cfg['fail_url'] ?? null,
+                receipt: (array) ($cfg['receipt'] ?? []),
             ),
             default => throw new InvalidArgumentException("Unsupported driver: {$cfg['driver']}"),
         };

@@ -60,6 +60,22 @@ return [
             'success_url' => env('TBANK_SUCCESS_URL', ''),
             'fail_url' => env('TBANK_FAIL_URL', ''),
             'http_timeout' => 15,
+
+            // Онлайн-касса (54-ФЗ). Обязательно, если к терминалу подключена касса
+            // (иначе Init отвечает ErrorCode 309 {request.validate.expected.receipt}).
+            'receipt' => [
+                'enabled' => (bool) env('TBANK_RECEIPT_ENABLED', false),
+                // Система налогообложения: osn | usn_income | usn_income_outcome | patent | envd | esn
+                'taxation' => env('TBANK_RECEIPT_TAXATION', 'usn_income'),
+                // Ставка НДС: none | vat0 | vat5 | vat7 | vat10 | vat20 | vat110 | vat120
+                'vat' => env('TBANK_RECEIPT_VAT', 'none'),
+                'item_name' => env('TBANK_RECEIPT_ITEM', 'Пополнение баланса'),
+                // Признак способа/предмета расчёта
+                'payment_method' => env('TBANK_RECEIPT_PAYMENT_METHOD', 'full_payment'),
+                'payment_object' => env('TBANK_RECEIPT_PAYMENT_OBJECT', 'service'),
+                // Куда отправить чек, если у пользователя не заполнен телефон.
+                'default_email' => env('TBANK_RECEIPT_DEFAULT_EMAIL', ''),
+            ],
         ],
 
     ],

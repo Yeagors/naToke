@@ -20,6 +20,7 @@ class Car extends Model
         'comment',
         'battery_capacity',
         'battery_number',
+        'frame_number',
         'license_plate',
         'photo',
     ];
@@ -31,7 +32,6 @@ class Car extends Model
             'balance' => 'decimal:2',
             'purchase_price' => 'decimal:2',
             'purchase_date' => 'date',
-            'battery_capacity' => 'integer',
         ];
     }
 

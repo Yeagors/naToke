@@ -21,9 +21,10 @@ $maxWidth = [
     x-on:close.stop="show = false"
     x-on:keydown.escape.window="show = false"
     x-show="show"
-    class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
+    class="fixed inset-0 overflow-y-auto z-50"
     style="display: none;"
 >
+    {{-- Backdrop --}}
     <div
         x-show="show"
         class="fixed inset-0 transition-all transform"
@@ -38,16 +39,20 @@ $maxWidth = [
         <div class="absolute inset-0 bg-ink-950/75 backdrop-blur-md"></div>
     </div>
 
-    <div
-        x-show="show"
-        class="mb-6 glass-strong rounded-2xl overflow-hidden transform transition-all sm:w-full sm:mx-auto {{ $maxWidth }}"
-        x-transition:enter="ease-out duration-200"
-        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-        x-transition:leave="ease-in duration-150"
-        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-    >
-        {{ $slot }}
+    {{-- Centering wrapper: keeps the panel vertically centered, and scrollable
+         from the top when its content is taller than the viewport. --}}
+    <div class="flex min-h-full items-center justify-center px-4 py-6 sm:px-0">
+        <div
+            x-show="show"
+            class="relative glass-strong rounded-2xl overflow-hidden transform transition-all sm:w-full sm:mx-auto {{ $maxWidth }}"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        >
+            {{ $slot }}
+        </div>
     </div>
 </div>

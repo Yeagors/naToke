@@ -20,7 +20,12 @@ class User extends Authenticatable
         'first_name',
         'middle_name',
         'phone',
+        'phone2',
+        'email',
         'birth_date',
+        'birth_place',
+        'address_registration',
+        'address_residence',
         'passport_series',
         'passport_number',
         'passport_issued_by',
@@ -82,5 +87,11 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    /** Есть ли контакт для отправки чека (обязателен для пополнения по СБП). */
+    public function hasReceiptContact(): bool
+    {
+        return filled($this->phone) || filled($this->email);
     }
 }

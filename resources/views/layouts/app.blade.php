@@ -45,5 +45,37 @@
                 </div>
             </footer>
         </div>
+
+        {{-- Toaster: server flash (session('toast')) + client-side window 'notify' events --}}
+        <div
+            x-data="{
+                items: [],
+                add(t) {
+                    const id = Date.now() + Math.random();
+                    this.items.push({ id, type: t.type || 'info', message: t.message || '' });
+                    setTimeout(() => this.remove(id), t.timeout || 6000);
+                },
+                remove(id) { this.items = this.items.filter(i => i.id !== id); }
+            }"
+            x-init="@if(session('toast')) add({ type: @js(session('toast.type', 'info')), message: @js(session('toast.message')) }) @endif"
+            x-on:notify.window="add($event.detail)"
+            class="fixed top-20 right-4 z-[100] flex flex-col gap-2 w-80 max-w-[90vw]"
+        >
+            <template x-for="t in items" :key="t.id">
+                <div
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 translate-x-4"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="glass-strong rounded-xl px-4 py-3 text-sm flex items-start gap-3 border shadow-lg"
+                    :class="t.type === 'error' ? 'border-neon-red/40 text-neon-red' : (t.type === 'success' ? 'border-neon-lime/40 text-neon-lime' : 'border-white/10 text-ink-100')"
+                >
+                    <span class="flex-1 leading-snug" x-text="t.message"></span>
+                    <button type="button" x-on:click="remove(t.id)" class="opacity-60 hover:opacity-100 leading-none">✕</button>
+                </div>
+            </template>
+        </div>
     </body>
 </html>

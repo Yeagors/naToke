@@ -36,6 +36,10 @@ Route::middleware('auth')->group(function () {
         ->name('payments.fake.confirm');
 
     Route::middleware('admin')->group(function () {
+        // SBP top-ups (admin overview + refund)
+        Route::get('/sbp-payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::post('/payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
+
         // Users
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/search.json', [UserController::class, 'search'])->name('users.search');
@@ -64,6 +68,7 @@ Route::middleware('auth')->group(function () {
 
         // Rentals — admin only
         Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
+        Route::get('/rentals/{rental}/contract', [RentalController::class, 'contract'])->name('rentals.contract');
         Route::post('/rentals/{rental}/pause', [RentalController::class, 'pause'])->name('rentals.pause');
         Route::post('/rentals/{rental}/resume', [RentalController::class, 'resume'])->name('rentals.resume');
         Route::post('/rentals/{rental}/close', [RentalController::class, 'close'])->name('rentals.close');

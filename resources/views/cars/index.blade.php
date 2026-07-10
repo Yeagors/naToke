@@ -66,7 +66,7 @@
                                 <td class="text-sm">{{ $c->year ?? '—' }}</td>
                                 <td>
                                     <div class="text-sm">
-                                        {{ $c->battery_capacity ? $c->battery_capacity.' Wh' : '—' }}
+                                        {{ $c->battery_capacity ?: '—' }}
                                     </div>
                                     @if($c->battery_number)
                                         <div class="text-xs text-ink-300 font-mono">№ {{ $c->battery_number }}</div>

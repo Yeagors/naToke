@@ -49,10 +49,44 @@ class PaymentController extends Controller
                 $data['comment'] ?? null
             );
         } catch (Throwable $e) {
-            return back()->withErrors(['amount' => 'Не удалось создать платёж: '.$e->getMessage()])->withInput();
+            report($e);
+            return back()
+                ->with('toast', ['type' => 'error', 'message' => 'Не удалось создать платёж: '.$e->getMessage()])
+                ->withInput();
         }
 
         return redirect()->route('payments.show', $paymentRequest);
+    }
+
+    /**
+     * Admin: overview of all SBP top-ups.
+     */
+    public function index(Request $request): View
+    {
+        $payments = PaymentRequest::with('user')
+            ->latest()
+            ->paginate(30);
+
+        return view('payments.index', ['payments' => $payments]);
+    }
+
+    /**
+     * Admin: refund a confirmed top-up (calls gateway Cancel + reverses balance).
+     */
+    public function refund(Request $request, PaymentRequest $payment): RedirectResponse
+    {
+        if (! $payment->isConfirmed()) {
+            return back()->with('toast', ['type' => 'error', 'message' => 'Вернуть можно только зачисленный платёж.']);
+        }
+
+        try {
+            $this->gateways->make($payment->gateway)->cancel($payment);
+        } catch (Throwable $e) {
+            report($e);
+            return back()->with('toast', ['type' => 'error', 'message' => 'Возврат не удался: '.$e->getMessage()]);
+        }
+
+        return back()->with('toast', ['type' => 'success', 'message' => "Платёж #{$payment->id} возвращён."]);
     }
 
     /**
@@ -78,7 +112,8 @@ class PaymentController extends Controller
         $this->authorize($request, $payment);
 
         // For real providers we'd also refresh from remote here. Fake gateway is local-only.
-        if ($payment->gateway !== 'fake') {
+        // Skip terminal payments (confirmed/failed/cancelled/refunded) — their status is final.
+        if ($payment->gateway !== 'fake' && $payment->isPending()) {
             try {
                 $this->gateways->make($payment->gateway)->refreshStatus($payment);
                 $payment->refresh();

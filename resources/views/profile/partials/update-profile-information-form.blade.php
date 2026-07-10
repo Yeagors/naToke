@@ -41,9 +41,35 @@
                 <x-input-error :messages="$errors->get('birth_date')" />
             </div>
             <div>
+                <x-input-label for="birth_place" :value="'Место рождения'" />
+                <x-text-input id="birth_place" type="text" name="birth_place" :value="old('birth_place', $user->birth_place)" maxlength="255" placeholder="Гор. Саратов" :disabled="!$canEdit" />
+                <x-input-error :messages="$errors->get('birth_place')" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
                 <x-input-label for="phone" :value="'Телефон'" />
                 <x-text-input id="phone" type="tel" name="phone" :value="old('phone', $user->phone)" maxlength="32" placeholder="+7…" :disabled="!$canEdit" />
                 <x-input-error :messages="$errors->get('phone')" />
+            </div>
+            <div>
+                <x-input-label for="phone2" :value="'Телефон 2'" />
+                <x-text-input id="phone2" type="tel" name="phone2" :value="old('phone2', $user->phone2)" maxlength="32" placeholder="+7… (доп.)" :disabled="!$canEdit" />
+                <x-input-error :messages="$errors->get('phone2')" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+                <x-input-label for="address_registration" :value="'Адрес регистрации'" />
+                <x-text-input id="address_registration" type="text" name="address_registration" :value="old('address_registration', $user->address_registration)" maxlength="500" placeholder="город, улица, дом, кв." :disabled="!$canEdit" />
+                <x-input-error :messages="$errors->get('address_registration')" />
+            </div>
+            <div>
+                <x-input-label for="address_residence" :value="'Адрес проживания'" />
+                <x-text-input id="address_residence" type="text" name="address_residence" :value="old('address_residence', $user->address_residence)" maxlength="500" placeholder="если отличается" :disabled="!$canEdit" />
+                <x-input-error :messages="$errors->get('address_residence')" />
             </div>
         </div>
 
@@ -52,6 +78,11 @@
                 <x-input-label for="login" :value="'Логин'" />
                 <x-text-input id="login" type="text" name="login" :value="old('login', $user->login)" required :disabled="!$canEdit" />
                 <x-input-error :messages="$errors->get('login')" />
+            </div>
+            <div>
+                <x-input-label for="email" :value="'Email (для чека)'" />
+                <x-text-input id="email" type="email" name="email" :value="old('email', $user->email)" maxlength="255" placeholder="mail@example.com" :disabled="!$canEdit" />
+                <x-input-error :messages="$errors->get('email')" />
             </div>
         </div>
 
