@@ -21,8 +21,10 @@ class StatsController extends Controller
         $monthEnd = $now->copy()->endOfMonth();
         $today = $now->copy()->startOfDay();
 
-        $receivable = abs((float) User::where('balance', '<', 0)->sum('balance'));
-        $debtorsCount = User::where('balance', '<', 0)->count();
+        // Дебиторка/должники — только по водителям. Балансы админов (владельцев)
+        // двигаются от деления дохода/расходов компании и в задолженность не входят.
+        $receivable = abs((float) User::where('role', 'driver')->where('balance', '<', 0)->sum('balance'));
+        $debtorsCount = User::where('role', 'driver')->where('balance', '<', 0)->count();
 
         $revenueRows = CarTransaction::query()
             ->where('type', 'income')

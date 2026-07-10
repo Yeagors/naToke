@@ -156,6 +156,13 @@
                     <x-input-error :messages="$errors->get('buyout_price')" />
                 </div>
 
+                <div x-show="isBuyout" x-collapse class="mt-3">
+                    <x-input-label for="buyout_days_display" :value="'Кол-во платежей (расчёт)'" />
+                    <input id="buyout_days_display" type="number" readonly :value="computedPayments"
+                           class="block w-full rounded-xl border-white/10 bg-ink-900/60 text-neon-lime font-mono cursor-not-allowed focus:ring-0">
+                    <p class="text-xs text-ink-300 mt-1">Пересчитывается автоматически при изменении выкупной стоимости или суммы списания: стоимость ÷ сумма, с округлением вверх.</p>
+                </div>
+
                 <div x-show="isBuyout" x-collapse class="mt-3 rounded-xl border border-white/8 bg-ink-900/40 px-4 py-3">
                     <template x-if="computedPayments > 0">
                         <div class="text-sm text-ink-100">

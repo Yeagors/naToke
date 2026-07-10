@@ -84,8 +84,10 @@ class ReportController extends Controller
         // Aggregate totals
         $income = (float) CarTransaction::where('type', 'income')->whereBetween('created_at', [$start, $end])->sum('amount');
         $expense = (float) CarTransaction::where('type', 'expense')->whereBetween('created_at', [$start, $end])->sum('amount');
-        $userIn = (float) Transaction::where('type', 'deposit')->whereBetween('created_at', [$start, $end])->sum('amount');
-        $userOut = (float) Transaction::where('type', 'withdrawal')->whereBetween('created_at', [$start, $end])->sum('amount');
+        // Только по водителям — доли владельцев (админов) в водительские потоки не входят.
+        $driverTx = fn ($q) => $q->whereHas('user', fn ($u) => $u->where('role', 'driver'));
+        $userIn = (float) Transaction::where('type', 'deposit')->whereBetween('created_at', [$start, $end])->where($driverTx)->sum('amount');
+        $userOut = (float) Transaction::where('type', 'withdrawal')->whereBetween('created_at', [$start, $end])->where($driverTx)->sum('amount');
 
         $rentalsCreated = Rental::whereBetween('created_at', [$start, $end])->count();
         $rentalsClosed = Rental::whereBetween('closed_at', [$start, $end])->count();
@@ -198,7 +200,7 @@ class ReportController extends Controller
             ->groupBy('user_id')->select('user_id', DB::raw('SUM(amount) as total'))->pluck('total', 'user_id');
 
         $row = 2;
-        foreach (User::orderBy('id')->get() as $u) {
+        foreach (User::where('role', 'driver')->orderBy('id')->get() as $u) {
             $d = (float) ($deposit[$u->id] ?? 0);
             $w = (float) ($withdrawal[$u->id] ?? 0);
             if ($d == 0 && $w == 0) continue; // skip users with no activity this month
@@ -280,7 +282,10 @@ class ReportController extends Controller
         $sheet->fromArray($headers, null, 'A1');
         $this->headerStyle($sheet, 'A1:H1');
 
-        $userTx = Transaction::with(['user', 'rental.car'])->whereBetween('created_at', [$start, $end])->get();
+        // Детализация — только транзакции водителей (доли владельцев/компании исключаем).
+        $userTx = Transaction::with(['user', 'rental.car'])
+            ->whereHas('user', fn ($q) => $q->where('role', 'driver'))
+            ->whereBetween('created_at', [$start, $end])->get();
         $carTx = CarTransaction::with(['car', 'rental.user'])->whereBetween('created_at', [$start, $end])->get();
 
         $rows = collect();

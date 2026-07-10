@@ -141,6 +141,37 @@
                     </div>
 
                     <fieldset class="rounded-xl border border-white/8 px-4 py-3">
+                        <legend class="px-2 text-xs uppercase tracking-[0.18em] text-ink-300">Контакты и адреса (для договора)</legend>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                            <div>
+                                <x-input-label for="phone2" :value="'Телефон 2'" />
+                                <x-text-input id="phone2" type="tel" name="phone2" :value="old('phone2', $user->phone2)" maxlength="32" placeholder="+7… (доп.)" />
+                                <x-input-error :messages="$errors->get('phone2')" />
+                            </div>
+                            <div>
+                                <x-input-label for="email" :value="'Email (для чека)'" />
+                                <x-text-input id="email" type="email" name="email" :value="old('email', $user->email)" maxlength="255" placeholder="mail@example.com" />
+                                <x-input-error :messages="$errors->get('email')" />
+                            </div>
+                            <div>
+                                <x-input-label for="birth_place" :value="'Место рождения'" />
+                                <x-text-input id="birth_place" type="text" name="birth_place" :value="old('birth_place', $user->birth_place)" maxlength="255" placeholder="Гор. Саратов" />
+                                <x-input-error :messages="$errors->get('birth_place')" />
+                            </div>
+                            <div>
+                                <x-input-label for="address_registration" :value="'Адрес регистрации'" />
+                                <x-text-input id="address_registration" type="text" name="address_registration" :value="old('address_registration', $user->address_registration)" maxlength="500" placeholder="город, улица, дом, кв." />
+                                <x-input-error :messages="$errors->get('address_registration')" />
+                            </div>
+                            <div class="sm:col-span-2">
+                                <x-input-label for="address_residence" :value="'Адрес проживания (если отличается)'" />
+                                <x-text-input id="address_residence" type="text" name="address_residence" :value="old('address_residence', $user->address_residence)" maxlength="500" />
+                                <x-input-error :messages="$errors->get('address_residence')" />
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="rounded-xl border border-white/8 px-4 py-3">
                         <legend class="px-2 text-xs uppercase tracking-[0.18em] text-ink-300">Паспортные данные</legend>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                             <div>
