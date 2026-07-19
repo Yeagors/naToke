@@ -169,7 +169,7 @@
                         <div>
                             <div class="stat-label">Электровелосипед</div>
                             <div class="font-medium mt-0.5">{{ $rental->car?->display_name ?? '—' }}</div>
-                            <div class="text-xs text-ink-300">{{ $rental->car?->license_plate }}@if($rental->battery) · АКБ {{ $rental->battery->callsign ?: $rental->battery->vin }}@endif</div>
+                            <div class="text-xs text-ink-300">{{ $rental->car?->license_plate }}@if($rental->batteries->isNotEmpty()) · АКБ {{ $rental->batteries->map(fn($b) => $b->callsign ?: $b->vin)->join(', ') }}@endif</div>
                         </div>
                         <div>
                             <div class="stat-label">Списание</div>

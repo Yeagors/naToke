@@ -20,7 +20,8 @@ class StoreRentalRequest extends FormRequest
         return [
             'user_id' => ['required', Rule::exists(User::class, 'id')],
             'tariff_id' => ['required', Rule::exists(Tariff::class, 'id')->where('is_active', true)],
-            'battery_id' => ['nullable', Rule::exists(Battery::class, 'id')],
+            'battery_ids' => ['nullable', 'array'],
+            'battery_ids.*' => [Rule::exists(Battery::class, 'id')],
             'started_at' => ['nullable', 'date'],
             'comment' => ['nullable', 'string', 'max:2000'],
         ];

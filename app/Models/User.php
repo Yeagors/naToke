@@ -94,4 +94,10 @@ class User extends Authenticatable
     {
         return filled($this->phone) || filled($this->email);
     }
+
+    /** Супер-админ (единственный, кто может удалять авто/пользователей/транзакции). */
+    public function isSuperAdmin(): bool
+    {
+        return $this->login === config('app.super_admin_login', 'sokolov');
+    }
 }

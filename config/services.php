@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // ВРЕМЕННО (AI seller demo). Удалить вместе с AiSellerDemoController.
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+    ],
+
 ];

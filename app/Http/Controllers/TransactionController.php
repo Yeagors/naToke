@@ -193,4 +193,32 @@ class TransactionController extends Controller
 
         return back()->with('status', "{$label} на сумму ".$formatted.' ₽ проведено.');
     }
+
+    /**
+     * Delete a single user transaction. Does NOT recompute balances automatically.
+     * (payment_requests.transaction_id → set to null by FK.)
+     */
+    public function destroy(Transaction $transaction): RedirectResponse
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
+        $info = '#'.$transaction->id.' · '.$transaction->signed_amount.' ₽';
+
+        DB::transaction(function () use ($transaction) {
+            $user = $transaction->user()->lockForUpdate()->first();
+            if ($user) {
+                // Reverse this transaction's effect on the balance.
+                $user->balance = (float) $user->balance - $transaction->type->sign() * (float) $transaction->amount;
+                $user->save();
+            }
+            $transaction->delete();
+        });
+
+        ActivityLogger::log('transactions.deleted', null, "Удалена транзакция {$info} · баланс пересчитан");
+
+        return back()->with('toast', [
+            'type' => 'success',
+            'message' => 'Транзакция удалена, баланс пересчитан.',
+        ]);
+    }
 }

@@ -116,6 +116,7 @@
                             <th class="w-24 whitespace-nowrap">Аренда</th>
                             <th>Комментарий</th>
                             <th class="w-32 whitespace-nowrap">Автор</th>
+                            <th class="w-10"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -167,9 +168,20 @@
                                 </td>
                                 <td class="text-sm text-ink-200 max-w-md truncate" title="{{ $row['comment'] }}">{{ $row['comment'] ?: '—' }}</td>
                                 <td class="text-xs text-ink-300">{{ $row['created_by'] ?: 'system' }}</td>
+                                <td class="text-right">
+                                    @if($row['kind'] === 'user' && auth()->user()->isSuperAdmin())
+                                        <form method="POST" action="{{ route('transactions.destroy', $row['id']) }}"
+                                              onsubmit="return confirm('Удалить транзакцию #{{ $row['id'] }}? Баланс будет пересчитан.')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="text-neon-red/60 hover:text-neon-red" title="Удалить транзакцию">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+                                            </button>
+                                        </form>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="text-center py-10 text-ink-300">
+                            <tr><td colspan="10" class="text-center py-10 text-ink-300">
                                 Транзакций по этим фильтрам нет.
                                 @if($direction !== 'all' || $sign !== 'all' || $q || $from || $to)
                                     <a href="{{ route('transactions.index') }}" class="text-neon-cyan underline ml-2">Сбросить фильтры</a>

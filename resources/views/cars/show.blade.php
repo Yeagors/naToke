@@ -361,6 +361,19 @@
                         <x-primary-button>Сохранить</x-primary-button>
                     </div>
                 </form>
+
+                @if(auth()->user()->isSuperAdmin())
+                {{-- Danger zone --}}
+                <form method="POST" action="{{ route('cars.destroy', $car) }}" class="mt-4 rounded-2xl border border-neon-red/20 bg-neon-red/5 p-4"
+                      onsubmit="return confirm('Удалить авто {{ $car->display_name }} ({{ $car->license_plate }})?\nВместе с ним будут удалены ВСЕ его аренды и транзакции, балансы пользователей пересчитаются. Действие необратимо.')">
+                    @csrf @method('DELETE')
+                    <div class="text-xs uppercase tracking-[0.18em] text-neon-red/80 mb-2">Опасная зона</div>
+                    <button type="submit" class="btn btn-ghost w-full justify-center text-neon-red border-neon-red/40 hover:bg-neon-red/10">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+                        Удалить авто со всеми зависимостями
+                    </button>
+                </form>
+                @endif
             </div>
         </div>
     </div>
@@ -535,18 +548,23 @@
                     </div>
 
                     <div>
-                        <x-input-label for="battery_id" :value="'Аккумулятор (АКБ)'" />
-                        @php
-                            $batteryOptions = ($batteries ?? collect())->map(fn ($b) => [
-                                'value' => $b->id,
-                                'label' => ($b->callsign ? $b->callsign.' · ' : '').($b->capacity ? $b->capacity.' · ' : '').$b->vin,
-                            ])->all();
-                        @endphp
-                        <x-select name="battery_id" :value="old('battery_id')" :options="$batteryOptions" placeholder="— без АКБ —" />
+                        <x-input-label :value="'Аккумуляторы (можно несколько)'" />
                         @if(($batteries ?? collect())->isEmpty())
                             <p class="text-xs text-ink-300 mt-1">Нет свободных АКБ для модели «{{ $car->display_name }}». <a href="{{ route('batteries.create') }}" class="underline text-neon-cyan">Добавить</a>.</p>
+                        @else
+                            <div class="mt-1 max-h-44 overflow-y-auto rounded-xl border border-white/10 bg-ink-800/50 divide-y divide-white/5">
+                                @foreach($batteries as $b)
+                                    <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/5 text-sm">
+                                        <input type="checkbox" name="battery_ids[]" value="{{ $b->id }}"
+                                               @checked(in_array($b->id, old('battery_ids', [])))
+                                               class="rounded border-white/15 bg-ink-800/70 text-neon-cyan focus:ring-neon-cyan/40">
+                                        <span>{{ ($b->callsign ? $b->callsign.' · ' : '').($b->capacity ? $b->capacity.' · ' : '').$b->vin }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <p class="text-xs text-ink-300 mt-1">Отметьте одну или несколько АКБ, которые выдаются с этой арендой.</p>
                         @endif
-                        <x-input-error :messages="$errors->get('battery_id')" />
+                        <x-input-error :messages="$errors->get('battery_ids')" />
                     </div>
 
                     <div>

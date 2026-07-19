@@ -55,17 +55,23 @@ class PaymentService
 
     public function confirm(PaymentRequest $request, ?int $actorId = null): PaymentRequest
     {
-        if ($request->status !== PaymentStatus::Pending) {
-            return $request; // idempotent — confirmation already happened
-        }
+        // Guard against duplicate/concurrent provider webhooks (T-Bank sends the
+        // notification from several servers at once). We lock the payment row and
+        // re-check its status INSIDE the transaction, so exactly one caller credits.
+        $didConfirm = false;
 
-        DB::transaction(function () use ($request, $actorId) {
-            $user = $request->user()->lockForUpdate()->first();
+        DB::transaction(function () use ($request, $actorId, &$didConfirm) {
+            $locked = PaymentRequest::whereKey($request->id)->lockForUpdate()->first();
+            if (! $locked || $locked->status !== PaymentStatus::Pending) {
+                return; // already confirmed by a concurrent/earlier call
+            }
+
+            $user = $locked->user()->lockForUpdate()->first();
             if (! $user) {
                 throw new RuntimeException('Payment user disappeared');
             }
 
-            $amount = (float) $request->amount;
+            $amount = (float) $locked->amount;
             $newBalance = (float) $user->balance + $amount;
             $user->balance = $newBalance;
             $user->save();
@@ -75,43 +81,48 @@ class PaymentService
                 'type' => TransactionType::Deposit,
                 'amount' => $amount,
                 'balance_after' => $newBalance,
-                'comment' => 'Пополнение через '.($request->gateway === 'fake' ? 'симулятор СБП' : 'СБП (T-Bank)')
-                    .($request->comment ? ' · '.$request->comment : ''),
-                'created_by' => $actorId ?? $request->initiated_by ?? $user->id,
+                'comment' => 'Пополнение через '.($locked->gateway === 'fake' ? 'симулятор СБП' : 'СБП (T-Bank)')
+                    .($locked->comment ? ' · '.$locked->comment : ''),
+                'created_by' => $actorId ?? $locked->initiated_by ?? $user->id,
             ]);
 
-            $request->status = PaymentStatus::Confirmed;
-            $request->confirmed_at = now();
-            $request->transaction_id = $tx->id;
-            $request->save();
+            $locked->status = PaymentStatus::Confirmed;
+            $locked->confirmed_at = now();
+            $locked->transaction_id = $tx->id;
+            $locked->save();
+
+            // Split the incoming payment between the owners — inside the guarded
+            // transaction, so it runs exactly once per payment.
+            $basis = config('owners.split_basis', 'base');
+            $splitAmount = $basis === 'charge'
+                ? (float) ($locked->charge_amount ?: $locked->amount)
+                : (float) $locked->amount;
+            try {
+                app(\App\Services\CompanyLedger::class)->record(
+                    'income', $splitAmount, "Пополнение по СБП #{$locked->id}", 'sbp', $locked->id, $actorId
+                );
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            $didConfirm = true;
         });
 
         $request->refresh();
 
-        // Split the incoming payment between the owners (separate company accounting).
-        try {
-            $basis = config('owners.split_basis', 'base');
-            $splitAmount = $basis === 'charge'
-                ? (float) ($request->charge_amount ?: $request->amount)
-                : (float) $request->amount;
-            app(\App\Services\CompanyLedger::class)->record(
-                'income', $splitAmount, "Пополнение по СБП #{$request->id}", 'sbp', $request->id, $actorId
+        if ($didConfirm) {
+            ActivityLogger::log(
+                'payments.confirmed',
+                $request,
+                sprintf('Платёж #%d зачислен · +%s ₽ на баланс %s',
+                    $request->id,
+                    number_format((float) $request->amount, 2, '.', ' '),
+                    $request->user->full_name
+                ),
+                null,
+                $actorId
             );
-        } catch (\Throwable $e) {
-            report($e);
         }
-
-        ActivityLogger::log(
-            'payments.confirmed',
-            $request,
-            sprintf('Платёж #%d зачислен · +%s ₽ на баланс %s',
-                $request->id,
-                number_format((float) $request->amount, 2, '.', ' '),
-                $request->user->full_name
-            ),
-            null,
-            $actorId
-        );
 
         return $request;
     }

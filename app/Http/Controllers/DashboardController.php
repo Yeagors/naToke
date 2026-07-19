@@ -23,7 +23,7 @@ class DashboardController extends Controller
             // Активная аренда водителя для «экрана водителя».
             $stats['active_rental'] = $user->rentals()
                 ->whereIn('status', ['open', 'paused'])
-                ->with(['car', 'tariff', 'battery'])
+                ->with(['car', 'tariff', 'batteries'])
                 ->latest('id')
                 ->first();
         }

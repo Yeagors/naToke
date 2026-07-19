@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AiSellerDemoController;
 use App\Http\Controllers\BatteryController;
 use App\Http\Controllers\CarController;
 use App\Http\Controllers\CompanyTransactionController;
@@ -54,8 +55,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
         Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
         Route::post('/users/{user}/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+        Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
 
         // Cars
         Route::get('/cars', [CarController::class, 'index'])->name('cars.index');
@@ -63,6 +66,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/cars', [CarController::class, 'store'])->name('cars.store');
         Route::get('/cars/{car}', [CarController::class, 'show'])->name('cars.show');
         Route::patch('/cars/{car}', [CarController::class, 'update'])->name('cars.update');
+        Route::delete('/cars/{car}', [CarController::class, 'destroy'])->name('cars.destroy');
         Route::post('/cars/{car}/transactions', [CarTransactionController::class, 'store'])->name('cars.transactions.store');
         Route::post('/cars/{car}/rentals', [RentalController::class, 'store'])->name('cars.rentals.store');
 
@@ -101,6 +105,14 @@ Route::middleware('auth')->group(function () {
     // Rental show — accessible by admin OR the renter (ownership check inside controller)
     Route::get('/rentals/{rental}', [RentalController::class, 'show'])->name('rentals.show');
 });
+
+// ============================================================
+// AI SELLER DEMO — ВРЕМЕННО. Удалить этот блок вместе с
+// app/Http/Controllers/AiSellerDemoController.php и
+// resources/views/ai-seller-demo.blade.php. Публичный, без auth.
+// ============================================================
+Route::get('/ai-seller-demo', [AiSellerDemoController::class, 'index'])->name('ai.demo');
+Route::post('/ai-seller-demo/chat', [AiSellerDemoController::class, 'chat'])->name('ai.demo.chat');
 
 // Public payment webhook from T-Bank. CSRF exempt is configured in bootstrap/app.php
 // (validateCsrfTokens except 'payments/webhook/*'). Provider's signed Token is verified inside the gateway.

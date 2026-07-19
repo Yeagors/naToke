@@ -79,8 +79,10 @@
     <table class="grid">
         <tr><td style="width:38%">Марка, модель</td><td>{{ trim($car->brand.' '.$car->model) }}</td></tr>
         <tr><td>VIN номер (номер рамы)</td><td>{{ $car->frame_number ?: '—' }}</td></tr>
-        <tr><td>Тип батареи</td><td>Литий-ионная {{ $batteryCapacity ?: '' }}</td></tr>
-        <tr><td>VIN номер (номер батареи)</td><td>{{ $batteryVin ?: '—' }}</td></tr>
+        @foreach($batteries as $b)
+        <tr><td>Тип батареи</td><td>Литий-ионная {{ $b['capacity'] ?: '' }}</td></tr>
+        <tr><td>VIN номер (номер батареи)</td><td>{{ $b['vin'] ?: '—' }}</td></tr>
+        @endforeach
     </table>
     <p>(далее по тексту – электровелосипед, ТС), а Арендатор обязуется выплачивать вовремя арендную плату.</p>
     <p>1.2 Стоимость аренды ТС за сутки указана в Приложении № 1 к настоящему Договору. Арендная плата может изменяться по соглашению Сторон, но не чаще одного раза в год с учетом ставки рефинансирования Центрального Банка РФ.</p>
@@ -152,7 +154,9 @@
     <table class="grid">
         <tr><td style="width:38%">Марка, модель</td><td>{{ trim($car->brand.' '.$car->model) }}</td></tr>
         <tr><td>VIN номер (номер рамы)</td><td>{{ $car->frame_number ?: '—' }}</td></tr>
-        <tr><td>VIN номер (номер батареи)</td><td>{{ $batteryVin ?: '—' }}</td></tr>
+        @foreach($batteries as $b)
+        <tr><td>VIN номер (номер батареи)</td><td>{{ $b['vin'] ?: '—' }}</td></tr>
+        @endforeach
         <tr><td>Выкупная цена</td><td>{{ $rental->buyout_price ? $money($rental->buyout_price).' руб.' : '—' }}</td></tr>
         <tr><td>По адресу</td><td>{{ config('contract.handover_address') }}</td></tr>
         <tr><td>Дата выдачи</td><td>{{ $rentDate }}</td></tr>

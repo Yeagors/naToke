@@ -15,7 +15,6 @@ class Rental extends Model
         'car_id',
         'user_id',
         'tariff_id',
-        'battery_id',
         'status',
         'amount',
         'period',
@@ -97,9 +96,9 @@ class Rental extends Model
         return $this->belongsTo(Tariff::class);
     }
 
-    public function battery(): BelongsTo
+    public function batteries(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsTo(Battery::class);
+        return $this->belongsToMany(Battery::class);
     }
 
     public function creator(): BelongsTo

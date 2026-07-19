@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Http\Requests\StoreUserRequest;
+use App\Models\Car;
+use App\Models\CarTransaction;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -152,5 +155,51 @@ class UserController extends Controller
         return redirect()
             ->route('users.show', $user)
             ->with('status', 'Профиль пользователя обновлён.');
+    }
+
+    /**
+     * Delete a user with dependencies. FK cascade removes their transactions,
+     * rentals and payment requests; created_by references are set to null.
+     */
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($request->user()?->isSuperAdmin(), 403);
+
+        if ($user->id === $request->user()->id) {
+            return back()->with('toast', ['type' => 'error', 'message' => 'Нельзя удалить самого себя.']);
+        }
+
+        $name = $user->full_name;
+
+        DB::transaction(function () use ($user) {
+            $rentalIds = $user->rentals()->pluck('id')->all();
+
+            // Recompute car balances: reverse income the deleted user paid to cars.
+            $carTxs = CarTransaction::whereIn('rental_id', $rentalIds)->get();
+            foreach ($carTxs->groupBy('car_id') as $carId => $group) {
+                $car = Car::lockForUpdate()->find($carId);
+                if (! $car) {
+                    continue;
+                }
+                $delta = 0.0;
+                foreach ($group as $t) {
+                    $delta += $t->type->sign() * (float) $t->amount;
+                }
+                $car->balance = (float) $car->balance - $delta;
+                $car->save();
+            }
+            CarTransaction::whereIn('rental_id', $rentalIds)->delete();
+
+            if ($user->photo) {
+                Storage::disk('public')->delete($user->photo);
+            }
+            // FK cascade removes the user's own transactions, rentals and payment requests.
+            $user->delete();
+        });
+
+        ActivityLogger::log('users.deleted', null, "Удалён пользователь: {$name} — вместе с арендами, транзакциями и пополнениями; балансы авто пересчитаны");
+
+        return redirect()->route('users.index')
+            ->with('toast', ['type' => 'success', 'message' => "Пользователь «{$name}» удалён вместе с зависимостями."]);
     }
 }

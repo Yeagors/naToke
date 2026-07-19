@@ -222,6 +222,19 @@
                         <x-primary-button>Сохранить изменения</x-primary-button>
                     </div>
                 </form>
+
+                @if(auth()->user()->isSuperAdmin() && auth()->id() !== $user->id)
+                    {{-- Danger zone --}}
+                    <form method="POST" action="{{ route('users.destroy', $user) }}" class="mt-4 rounded-2xl border border-neon-red/20 bg-neon-red/5 p-4"
+                          onsubmit="return confirm('Удалить пользователя {{ $user->full_name }}?\nВместе с ним будут удалены его аренды, транзакции и пополнения, балансы авто пересчитаются. Действие необратимо.')">
+                        @csrf @method('DELETE')
+                        <div class="text-xs uppercase tracking-[0.18em] text-neon-red/80 mb-2">Опасная зона</div>
+                        <button type="submit" class="btn btn-ghost w-full justify-center text-neon-red border-neon-red/40 hover:bg-neon-red/10">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+                            Удалить пользователя со всеми зависимостями
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
     </div>

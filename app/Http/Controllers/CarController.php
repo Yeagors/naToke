@@ -4,10 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCarRequest;
 use App\Models\Car;
+use App\Models\CarTransaction;
+use App\Models\Rental;
 use App\Models\Tariff;
+use App\Models\Transaction;
+use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -100,5 +105,48 @@ class CarController extends Controller
         }
 
         return redirect()->route('cars.show', $car)->with('status', 'Данные авто обновлены.');
+    }
+
+    /**
+     * Delete a car with all its dependencies: rentals, their user transactions,
+     * and the car's own transactions.
+     */
+    public function destroy(Car $car): RedirectResponse
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
+        $name = $car->display_name.' ('.$car->license_plate.')';
+
+        DB::transaction(function () use ($car) {
+            $rentalIds = $car->rentals()->pluck('id')->all();
+
+            // Recompute user balances: reverse every user transaction on these rentals.
+            $txs = Transaction::whereIn('rental_id', $rentalIds)->get();
+            foreach ($txs->groupBy('user_id') as $userId => $group) {
+                $user = User::lockForUpdate()->find($userId);
+                if (! $user) {
+                    continue;
+                }
+                $delta = 0.0;
+                foreach ($group as $t) {
+                    $delta += $t->type->sign() * (float) $t->amount;
+                }
+                $user->balance = (float) $user->balance - $delta;
+                $user->save();
+            }
+
+            Transaction::whereIn('rental_id', $rentalIds)->delete();
+            CarTransaction::where('car_id', $car->id)->delete();
+            Rental::whereIn('id', $rentalIds)->delete();
+            if ($car->photo) {
+                Storage::disk('public')->delete($car->photo);
+            }
+            $car->delete();
+        });
+
+        ActivityLogger::log('cars.deleted', null, "Удалено авто: {$name} — вместе с арендами и транзакциями");
+
+        return redirect()->route('cars.index')
+            ->with('toast', ['type' => 'success', 'message' => "Авто «{$name}» удалено вместе с зависимостями."]);
     }
 }
