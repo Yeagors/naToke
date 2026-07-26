@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>АвтоКанал · AI-продавец (демо)</title>
+<title>наТоке · AI-менеджер проката (демо)</title>
 <style>
   :root{--bg:#0e131a;--panel:#151b24;--in:#202a38;--out:#2b5278;--tool:#0b0f15;--line:#243040;--tx:#e9eef5;--mut:#8a97a8;--acc:#5aa2f0}
   *{box-sizing:border-box}
@@ -41,10 +41,10 @@
 <body>
 <div class="app">
   <header>
-    <div class="ava">🤖</div>
+    <div class="ava">🛴</div>
     <div>
-      <div class="t">Алексей · АвтоКанал</div>
-      <div class="s"><span class="on">●</span> AI-продавец · онлайн 24/7</div>
+      <div class="t">Максим · наТоке</div>
+      <div class="s"><span class="on">●</span> менеджер проката · онлайн 24/7</div>
     </div>
   </header>
 
@@ -55,11 +55,12 @@
   <div id="feed"></div>
 
   <div class="hints" id="hints">
-    <span class="hint">Расскажи про Kia K5</span>
     <span class="hint">Что есть в наличии?</span>
-    <span class="hint">Готов взять Kia за 1 900 000</span>
-    <span class="hint">Кредит на Kia, взнос 500 тысяч на 5 лет</span>
-    <span class="hint">Hyundai Tucson ещё продаётся?</span>
+    <span class="hint">Как работает раскат (выкуп)?</span>
+    <span class="hint">Сколько стоит выкупить велосипед?</span>
+    <span class="hint">А просто арендовать на месяц?</span>
+    <span class="hint">Есть Kugoo U5?</span>
+    <span class="hint">Хочу записаться на выдачу</span>
   </div>
 
   <form id="form" autocomplete="off">
@@ -96,14 +97,14 @@ function addTool(t){
 }
 
 async function greet(){
-  addMsg('ai','Здравствуйте! Я AI-продавец АвтоКанала, на связи круглосуточно 🚗 Помогу выбрать, обсудить цену и оформить авто из наличия. Что интересует?');
+  addMsg('ai','Здравствуйте! Я AI-менеджер проката наТоке, на связи круглосуточно 🛴 Помогу выбрать электровелосипед — в аренду или на выкуп (раскат). Что интересует?');
 }
 
 async function ask(text){
   addMsg('me', esc(text));
   messages.push({role:'user', content:text});
   inp.value=''; inp.disabled=true; send.disabled=true;
-  const typing = addMsg('typing','Алексей печатает…'); typing.className='typing';
+  const typing = addMsg('typing','Максим печатает…'); typing.className='typing';
 
   try{
     const r = await fetch('{{ route('ai.demo.chat') }}', {
@@ -115,7 +116,6 @@ async function ask(text){
     typing.remove();
     if(!r.ok || data.error){ addMsg('ai','⚠️ '+esc(data.error||('Ошибка '+r.status))); }
     else{
-      (data.tools||[]).forEach(addTool);
       if(data.reply) addMsg('ai', linkify(data.reply));
       messages = data.messages;   // канонич. история с сервера
     }

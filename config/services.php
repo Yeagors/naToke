@@ -38,6 +38,20 @@ return [
     // ВРЕМЕННО (AI seller demo). Удалить вместе с AiSellerDemoController.
     'anthropic' => [
         'key' => env('ANTHROPIC_API_KEY'),
+        // Релей вне РФ (напр. Cloudflare Worker), т.к. api.anthropic.com
+        // недоступен с российского IP. Если пусто — идём напрямую.
+        'base_url' => env('ANTHROPIC_BASE_URL'),
+        // Либо обычный HTTP/SOCKS5-прокси вне РФ (напр. socks5://user:pass@host:port).
+        'proxy' => env('ANTHROPIC_PROXY'),
+    ],
+
+    // Telegram-бот для уведомлений о заявках от AI-менеджера.
+    'telegram' => [
+        'bot_token'     => env('TELEGRAM_BOT_TOKEN'),
+        'leads_chat_id' => env('TELEGRAM_LEADS_CHAT_ID'),
+        // api.telegram.org недоступен с РФ-хостинга → релей вне РФ (Cloudflare Worker).
+        // Если пусто — идём напрямую.
+        'base_url'      => env('TELEGRAM_BASE_URL'),
     ],
 
 ];

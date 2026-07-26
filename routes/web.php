@@ -7,6 +7,7 @@ use App\Http\Controllers\CarController;
 use App\Http\Controllers\CompanyTransactionController;
 use App\Http\Controllers\CarTransactionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -90,6 +91,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/rentals/{rental}/pause', [RentalController::class, 'pause'])->name('rentals.pause');
         Route::post('/rentals/{rental}/resume', [RentalController::class, 'resume'])->name('rentals.resume');
         Route::post('/rentals/{rental}/close', [RentalController::class, 'close'])->name('rentals.close');
+
+        // Заявки от AI-менеджера (демо-лиды)
+        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
 
         // Activity logs (audit)
         Route::get('/logs', [ActivityLogController::class, 'index'])->name('logs.index');
