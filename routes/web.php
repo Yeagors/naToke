@@ -24,6 +24,11 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
+// Публичные юридические страницы — доступны без авторизации
+// (нужны для оплаты и модерации T-Bank).
+Route::view('/offer', 'legal.offer')->name('offer');
+Route::view('/contacts', 'legal.contacts')->name('contacts');
+
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 

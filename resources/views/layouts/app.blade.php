@@ -45,7 +45,11 @@
 
             <footer class="relative z-10 border-t border-white/5 mt-8">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-ink-300">
-                    <div>© {{ date('Y') }} <span class="text-gradient font-semibold">naToke</span> — CRM проката электровелосипедов</div>
+                    <div class="flex items-center gap-3">
+                        <span>© {{ date('Y') }} <span class="text-gradient font-semibold">naToke</span> — CRM проката электровелосипедов</span>
+                        <a href="{{ route('offer') }}" class="hover:text-neon-cyan">Оферта</a>
+                        <a href="{{ route('contacts') }}" class="hover:text-neon-cyan">Контакты</a>
+                    </div>
                     <div class="flex items-center gap-2">
                         <span class="inline-block w-1.5 h-1.5 rounded-full bg-neon-lime animate-pulse"></span>
                         <span>сервер на связи · {{ now()->format('d.m.Y H:i') }} MSK</span>

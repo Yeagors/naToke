@@ -36,9 +36,11 @@ class PaymentController extends Controller
         $data = $request->validate([
             'amount' => "required|numeric|min:{$minAmount}|max:{$maxAmount}",
             'comment' => 'nullable|string|max:200',
+            'accept_offer' => 'accepted',
         ], [
             'amount.min' => "Минимальная сумма пополнения — {$minAmount} ₽.",
             'amount.max' => "Максимальная сумма пополнения за один платёж — {$maxAmount} ₽.",
+            'accept_offer.accepted' => 'Для пополнения необходимо принять условия оферты.',
         ]);
 
         try {

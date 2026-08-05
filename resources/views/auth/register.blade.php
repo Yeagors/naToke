@@ -122,6 +122,19 @@
             </div>
         </fieldset>
 
+        <div class="pt-1">
+            <label class="flex items-start gap-2.5 cursor-pointer select-none">
+                <input type="checkbox" name="accept_offer" value="1" {{ old('accept_offer') ? 'checked' : '' }} required
+                       class="mt-0.5 rounded border-white/20 bg-ink-800/70 text-neon-cyan focus:ring-neon-cyan">
+                <span class="text-xs text-ink-300 leading-relaxed">
+                    Я принимаю условия
+                    <a href="{{ route('offer') }}" target="_blank" rel="noopener" class="text-neon-cyan hover:underline">публичной оферты</a>
+                    и даю согласие на обработку персональных данных в соответствии с 152-ФЗ.
+                </span>
+            </label>
+            <x-input-error :messages="$errors->get('accept_offer')" class="mt-1" />
+        </div>
+
         <div class="flex items-center justify-between gap-3 pt-2">
             <a href="{{ route('login') }}" class="text-sm text-ink-300 hover:text-neon-cyan">Уже есть аккаунт? Войти</a>
             <x-primary-button>

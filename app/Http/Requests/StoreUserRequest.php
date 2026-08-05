@@ -50,7 +50,20 @@ class StoreUserRequest extends FormRequest
             $rules['role'] = ['required', Rule::enum(UserRole::class)];
         }
 
+        // Согласие на обработку ПД (152-ФЗ) — только при публичной саморегистрации.
+        // При создании пользователя администратором не требуется.
+        if ($this->routeIs('register')) {
+            $rules['accept_offer'] = ['accepted'];
+        }
+
         return $rules;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'accept_offer.accepted' => 'Необходимо принять условия оферты и согласие на обработку персональных данных.',
+        ];
     }
 
     public function attributes(): array

@@ -104,6 +104,13 @@
                             Зачисление произойдёт автоматически, эта страница обновится сама.
                         </p>
                     @endif
+
+                    {{-- Акцепт оферты: оплата = принятие условий (ст. 494 ГК РФ) --}}
+                    <p class="text-center text-[11px] text-ink-300/80 mt-4 max-w-md leading-relaxed">
+                        Оплачивая, вы принимаете условия
+                        <a href="{{ route('offer') }}" target="_blank" rel="noopener" class="text-neon-cyan hover:underline">публичной оферты</a>
+                        и даёте согласие на обработку персональных данных.
+                    </p>
                 </div>
             @endif
 
@@ -134,6 +141,13 @@
             <div x-show="status === 'refunded'" x-cloak class="text-center pt-2">
                 <p class="text-sm text-ink-300 mb-3">Платёж возвращён. Сумма списана с баланса.</p>
                 <a href="{{ route('profile.edit') }}" class="btn btn-ghost">Назад в профиль</a>
+            </div>
+
+            {{-- Логотипы платёжных систем (файлы кладём в public/images/pay/, см. README там) --}}
+            <div class="flex items-center justify-center gap-4 mt-6 pt-5 border-t border-white/5 opacity-80">
+                <span class="text-[11px] uppercase tracking-wider text-ink-300">Оплата через</span>
+                <img src="{{ asset('images/pay/sbp.svg') }}" alt="СБП" class="h-6 w-auto" onerror="this.style.display='none'">
+                <img src="{{ asset('images/pay/tbank.svg') }}" alt="Т-Банк" class="h-6 w-auto" onerror="this.style.display='none'">
             </div>
         </div>
     </div>

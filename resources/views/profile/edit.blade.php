@@ -151,7 +151,7 @@
     </div>
 
     {{-- Top-up by SBP QR modal (available to everyone) --}}
-    <x-modal name="topup-qr-modal" maxWidth="md" :show="$errors->hasAny(['amount']) && session('open_topup')">
+    <x-modal name="topup-qr-modal" maxWidth="md" :show="$errors->hasAny(['amount', 'accept_offer'])">
         <form method="POST" action="{{ route('payments.create') }}"
               x-data="{ amount: {{ (float) old('amount', 1000) }}, feePercent: {{ (float) config('payments.topup_fee_percent', 0) }},
                         get charge() { const a = parseFloat(this.amount) || 0; return Math.round(a * (1 + this.feePercent/100) * 100) / 100; } }">
@@ -193,10 +193,23 @@
                     </div>
                 @endif
 
-                <div class="mb-2">
+                <div class="mb-4">
                     <x-input-label for="comment" :value="'Комментарий'" />
                     <x-text-input id="comment" type="text" name="comment" :value="old('comment')" maxlength="200" placeholder="опционально" />
                 </div>
+
+                {{-- Акцепт оферты (ст. 494 ГК РФ) — обязателен для приёма платежа --}}
+                <label class="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input type="checkbox" name="accept_offer" value="1" {{ old('accept_offer') ? 'checked' : '' }}
+                           class="mt-0.5 rounded border-white/20 bg-ink-800/70 text-neon-cyan focus:ring-neon-cyan">
+                    <span class="text-xs text-ink-300 leading-relaxed">
+                        Я принимаю условия
+                        <a href="{{ route('offer') }}" target="_blank" rel="noopener"
+                           class="text-neon-cyan hover:underline">публичной оферты</a>
+                        и даю согласие на обработку персональных данных.
+                    </span>
+                </label>
+                <x-input-error :messages="$errors->get('accept_offer')" class="mt-1" />
             </div>
 
             <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/5">
